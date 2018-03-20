@@ -18,6 +18,11 @@ my ($name) = File::Basename::fileparse($dir);
 my $safe_name = $name;
 $safe_name =~ s/\./-/g;
 
+my $is_node = 0;
+if ( -f 'package.json' || -f 'package-lock.json' ) {
+    $is_node = 1;
+}
+
 ## --------------------------------------------------------------------------------------------------------------------
 # There are a number of things we want to do when we deploy:
 
@@ -27,6 +32,7 @@ msg("User        : $ENV{USER}");
 msg("Current Dir : $dir");
 msg("Name        : $name");
 msg("Safe Name   : $safe_name");
+msg("Is Node.js? : $is_node");
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Code
@@ -39,14 +45,10 @@ run('git rebase origin/master');
 ## --------------------------------------------------------------------------------------------------------------------
 # Update Packages
 
-sep();
-title("Installing Packages");
-
-if ( -f 'package.json' || -f 'package-lock.json' ) {
+if ( $is_node ) {
+    sep();
+    title("Installing Packages");
     run('npm install');
-}
-else {
-    msg('Skipping - not a Node.js project');
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
