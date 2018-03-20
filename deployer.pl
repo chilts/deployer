@@ -3,6 +3,7 @@
 
 use Modern::Perl;
 use File::Slurp;
+use File::Temp ();
 use IPC::Run3;
 use Cwd qw();
 use File::Basename qw();
@@ -78,6 +79,46 @@ if ( -f "deployer/cron.d" ) {
 else {
     msg("No cron found");
 }
+
+## --------------------------------------------------------------------------------------------------------------------
+# Supervisor
+
+sep();
+title("Supervisor");
+
+# create each line of the supervisor file
+my @supervisor;
+
+# create each line
+push(@supervisor, "[program:$safe_name]\n");
+push(@supervisor, "directory = $dir\n");
+if ( $is_node ) {
+    push(@supervisor, "command = npm start\n");
+}
+else {
+    push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
+}
+push(@supervisor, "user = $username\n");
+push(@supervisor, "autostart = true\n");
+push(@supervisor, "autorestart = true\n");
+push(@supervisor, "stdout_logfile = /var/log/$name/stdout.log\n");
+push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
+if ( $is_node ) {
+    push(@supervisor, "environment = NODE_ENV=production\n");
+}
+
+# write this out to a file
+my $supervisor_fh = File::Temp->new();
+my $supervisor_filename = $supervisor_fh->filename;
+# print "$supervisor_filename=$supervisor_filename\n";
+
+msg("Writing $supervisor_filename");
+msg(@supervisor);
+write_file($supervisor_fh, @supervisor);
+
+run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
+
+run("sudo service supervisor restart");
 
 ## --------------------------------------------------------------------------------------------------------------------
 
