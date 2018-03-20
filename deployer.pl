@@ -51,6 +51,21 @@ for my $line ( @dirs ) {
     run("sudo chown $username.$username $line");
 }
 
+## --------------------------------------------------------------------------------------------------------------------
+# Cron
+
+sep();
+title("Cron");
+
+if ( -f "deployer/cron.d" ) {
+    run("sudo cp deployer/cron.d /etc/cron.d/$safe_name");
+}
+else {
+    msg("No cron found");
+}
+
+## --------------------------------------------------------------------------------------------------------------------
+
 sep();
 title("Complete!");
 
