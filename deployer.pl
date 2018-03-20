@@ -37,6 +37,19 @@ run('git fetch --verbose');
 run('git rebase origin/master');
 
 ## --------------------------------------------------------------------------------------------------------------------
+# Update Packages
+
+sep();
+title("Installing Packages");
+
+if ( -f 'package.json' || -f 'package-lock.json' ) {
+    run('npm install');
+}
+else {
+    msg('Skipping - not a Node.js project');
+}
+
+## --------------------------------------------------------------------------------------------------------------------
 # Dirs
 
 sep();
