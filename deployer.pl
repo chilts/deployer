@@ -4,6 +4,8 @@
 use Modern::Perl;
 use File::Slurp;
 use IPC::Run3;
+use Cwd qw();
+use File::Basename qw();
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -11,17 +13,31 @@ use IPC::Run3;
 # You wouldn't do this normally since it depends on an ENV var, instead use User or File::HomeDir,
 my $username = $ENV{USER};
 
+my $dir = Cwd::cwd();
+my ($name) = File::Basename::fileparse($dir);
+my $safe_name = $name;
+$safe_name =~ s/\./-/g;
+
 ## --------------------------------------------------------------------------------------------------------------------
 # There are a number of things we want to do when we deploy:
 
 title("The Deployer is Deploying - Stand Back!");
 
-msg("User is $ENV{USER}");
+msg("User        : $ENV{USER}");
+msg("Current Dir : $dir");
+msg("Name        : $name");
+msg("Safe Name   : $safe_name");
+
+## --------------------------------------------------------------------------------------------------------------------
+# Code
 
 sep();
 title("Updating the Code");
 run('git fetch --verbose');
 run('git rebase origin/master');
+
+## --------------------------------------------------------------------------------------------------------------------
+# Dirs
 
 sep();
 title("Creating Dirs");
