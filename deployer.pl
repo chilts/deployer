@@ -58,12 +58,13 @@ if ( $is_node ) {
 sep();
 title("Creating Dirs");
 
+# for supervisord logging
+run("sudo mkdir -p /var/log/$name/");
+
 my @dirs = read_file('deployer/dirs');
 chomp @dirs;
 for my $line ( @dirs ) {
-    # msg("Creating dir $line");
     run("sudo mkdir -p $line");
-    # msg("Setting ownership to the current user");
     run("sudo chown $username.$username $line");
 }
 
