@@ -124,7 +124,6 @@ if ( $is_node ) {
 # write this out to a file
 my $supervisor_fh = File::Temp->new();
 my $supervisor_filename = $supervisor_fh->filename;
-# print "$supervisor_filename=$supervisor_filename\n";
 
 msg("Writing $supervisor_filename");
 msg(@supervisor);
@@ -133,6 +132,59 @@ write_file($supervisor_fh, @supervisor);
 run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
 
 run("sudo service supervisor restart");
+
+## --------------------------------------------------------------------------------------------------------------------
+# Nginx
+
+sep();
+title("Nginx");
+
+# ToDo: check if this is a naked domain or a sub-domain
+
+# assume naked domain for now
+my $domain = $name;
+my @nginx;
+push(@nginx, "server {\n");
+push(@nginx, "    listen      80;\n");
+push(@nginx, "    server_name $domain;\n");
+push(@nginx, "    location    / {\n");
+push(@nginx, "        proxy_set_header   X-Real-IP \$remote_addr;\n");
+push(@nginx, "        proxy_set_header   Host      \$http_host;\n");
+push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
+push(@nginx, "    }\n");
+push(@nginx, "}\n");
+push(@nginx, "\n");
+push(@nginx, "server {\n");
+push(@nginx, "    listen      80;\n");
+push(@nginx, "    server_name www.$domain;\n");
+push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
+push(@nginx, "    }\n");
+push(@nginx, "}\n");
+
+# write this out to a file
+my $nginx_fh = File::Temp->new();
+my $nginx_filename = $nginx_fh->filename;
+
+msg("Writing $nginx_filename");
+msg(@nginx);
+write_file($nginx_fh, @nginx);
+
+exit 0;
+
+run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
+run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+
+run("sudo service nginx restart");
+
+## --------------------------------------------------------------------------------------------------------------------
+# CertBot
+
+sep();
+title("CertBot");
+
+msg("");
+msg("Now run : sudo certbot --nginx");
+msg("");
 
 ## --------------------------------------------------------------------------------------------------------------------
 
