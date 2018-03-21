@@ -2,6 +2,7 @@
 ## --------------------------------------------------------------------------------------------------------------------
 
 use Modern::Perl;
+use Config::Simple;
 use File::Slurp;
 use File::Temp ();
 use IPC::Run3;
@@ -29,11 +30,23 @@ if ( -f 'package.json' || -f 'package-lock.json' ) {
 
 title("The Deployer is Deploying - Stand Back!");
 
+my $env = {};
+if ( -f 'deployer/env' ) {
+    my $cfg = new Config::Simple('deployer/env');
+    if ( defined $cfg ) {
+        %$env = $cfg->vars();
+    }
+}
+
 msg("User        : $ENV{USER}");
 msg("Current Dir : $dir");
 msg("Name        : $name");
 msg("Safe Name   : $safe_name");
 msg("Is Node.js? : $is_node");
+msg("Env         :");
+while (my ($k, $v) = each(%$env)) {
+    msg(" - $k=$v")
+}
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Code
