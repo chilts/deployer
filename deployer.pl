@@ -49,6 +49,23 @@ while (my ($k, $v) = each(%$env)) {
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
+# Packages
+
+sep();
+title("Checking Packages");
+
+if ( -f 'deployer/packages' ) {
+    my @pkgs = read_file('deployer/packages');
+    chomp @pkgs;
+    for my $pkg ( @pkgs ) {
+        run("dpkg-query --show $pkg");
+    }
+}
+else {
+    msg("No 'packages' file.");
+}
+
+## --------------------------------------------------------------------------------------------------------------------
 # Code
 
 sep();
