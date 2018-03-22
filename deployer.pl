@@ -179,7 +179,6 @@ push(@nginx, "server {\n");
 push(@nginx, "    listen      80;\n");
 push(@nginx, "    server_name www.$domain;\n");
 push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
-push(@nginx, "    }\n");
 push(@nginx, "}\n");
 
 # write this out to a file
