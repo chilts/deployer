@@ -190,7 +190,11 @@ msg(@nginx);
 write_file($nginx_fh, @nginx);
 
 run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
-run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+
+# only do the symlink if it doesn't already exist
+if ( ! -l "/etc/nginx/sites-enabled/$domain.conf" ) {
+    run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+}
 
 run("sudo service nginx restart");
 
