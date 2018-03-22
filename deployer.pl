@@ -133,7 +133,11 @@ push(@supervisor, "user = $username\n");
 push(@supervisor, "autostart = true\n");
 push(@supervisor, "autorestart = true\n");
 push(@supervisor, "stdout_logfile = /var/log/$name/stdout.log\n");
+push(@supervisor, "stdout_logfile_maxbytes=50MB\n");
+push(@supervisor, "stdout_logfile_backups=20\n");
 push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
+push(@supervisor, "stderr_logfile_maxbytes=50MB\n");
+push(@supervisor, "stderr_logfile_backups=20\n");
 if ( $is_node ) {
     push(@supervisor, "environment = NODE_ENV=production\n");
 }
