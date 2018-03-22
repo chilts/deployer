@@ -190,8 +190,6 @@ msg("Writing $nginx_filename");
 msg(@nginx);
 write_file($nginx_fh, @nginx);
 
-exit 0;
-
 run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
 run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
 
