@@ -74,6 +74,38 @@ run('git fetch --verbose');
 run('git rebase origin/master');
 
 ## --------------------------------------------------------------------------------------------------------------------
+# Minify
+
+sep();
+title("Minifying Assets");
+if ( -f "deployer/minify" ) {
+    my @minifies = read_file('deployer/minify');
+    chomp @minifies;
+    for my $minify ( @minifies ) {
+        my ($type, $filename) = split(':', $minify);
+        if ( $type eq 'css' ) {
+            msg("Minifying CSS : $filename.css");
+            run("curl -X POST -s --data-urlencode 'input\@$filename.css' https://cssminifier.com/raw > $filename.min.css");
+        }
+        if ( $type eq 'js' ) {
+            msg("Minifying JavaScript : $filename.js");
+            run("curl -X POST -s --data-urlencode 'input\@$filename.js' https://javascript-minifier.com/raw > $filename.min.js");
+        }
+        if ( $type eq 'png' ) {
+            msg("Crushing PNG : $filename.png");
+            run("curl -X POST -s --form 'input=\@filename.png;type=image/png' https://pngcrush.com/crush > $filename.min.png");
+        }
+        if ( $type eq 'jpg' ) {
+            msg("Optimising JPG : $filename.jpg");
+            run("curl -X POST -s --form 'input=\@filename.jpg;type=image/jpg' https://jpgoptimiser.com/optimise > $filename.min.jpgg");
+        }
+    }
+}
+else {
+    msg("No 'minify' file.");
+}
+
+## --------------------------------------------------------------------------------------------------------------------
 # Update Packages
 
 if ( $is_node ) {
