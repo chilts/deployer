@@ -156,7 +156,7 @@ my @supervisor;
 push(@supervisor, "[program:$safe_name]\n");
 push(@supervisor, "directory = $dir\n");
 if ( $is_node ) {
-    push(@supervisor, "command = npm start\n");
+    push(@supervisor, "command = node server.js\n");
 }
 else {
     push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
