@@ -189,46 +189,53 @@ run("sudo service supervisor restart");
 ## --------------------------------------------------------------------------------------------------------------------
 # Nginx
 
+# ToDo: check if this is a naked domain or a sub-domain.
+
 sep();
 title("Nginx");
 
-# ToDo: check if this is a naked domain or a sub-domain
-
 # assume naked domain for now
 my $domain = $name;
-my @nginx;
-push(@nginx, "server {\n");
-push(@nginx, "    listen      80;\n");
-push(@nginx, "    server_name $domain;\n");
-push(@nginx, "    location    / {\n");
-push(@nginx, "        proxy_set_header   X-Real-IP \$remote_addr;\n");
-push(@nginx, "        proxy_set_header   Host      \$http_host;\n");
-push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
-push(@nginx, "    }\n");
-push(@nginx, "}\n");
-push(@nginx, "\n");
-push(@nginx, "server {\n");
-push(@nginx, "    listen      80;\n");
-push(@nginx, "    server_name www.$domain;\n");
-push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
-push(@nginx, "}\n");
 
-# write this out to a file
-my $nginx_fh = File::Temp->new();
-my $nginx_filename = $nginx_fh->filename;
+# Skip if the Nginx config already exists.
+if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
+    my @nginx;
+    push(@nginx, "server {\n");
+    push(@nginx, "    listen      80;\n");
+    push(@nginx, "    server_name $domain;\n");
+    push(@nginx, "    location    / {\n");
+    push(@nginx, "        proxy_set_header   X-Real-IP \$remote_addr;\n");
+    push(@nginx, "        proxy_set_header   Host      \$http_host;\n");
+    push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
+    push(@nginx, "    }\n");
+    push(@nginx, "}\n");
+    push(@nginx, "\n");
+    push(@nginx, "server {\n");
+    push(@nginx, "    listen      80;\n");
+    push(@nginx, "    server_name www.$domain;\n");
+    push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
+    push(@nginx, "}\n");
 
-msg("Writing $nginx_filename");
-msg(@nginx);
-write_file($nginx_fh, @nginx);
+    # write this out to a file
+    my $nginx_fh = File::Temp->new();
+    my $nginx_filename = $nginx_fh->filename;
 
-run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
+    msg("Writing $nginx_filename");
+    msg(@nginx);
+    write_file($nginx_fh, @nginx);
 
-# only do the symlink if it doesn't already exist
-if ( ! -l "/etc/nginx/sites-enabled/$domain.conf" ) {
-    run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+    run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
+
+    # only do the symlink if it doesn't already exist
+    if ( ! -l "/etc/nginx/sites-enabled/$domain.conf" ) {
+        run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+    }
+
+    run("sudo service nginx restart");
 }
-
-run("sudo service nginx restart");
+else {
+    msg("Nginx config already set up. You'll need to make changes manually to force any changes.");
+}
 
 ## --------------------------------------------------------------------------------------------------------------------
 # CertBot
