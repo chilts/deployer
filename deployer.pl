@@ -24,6 +24,7 @@ my $is_node = 0;
 if ( -f 'package.json' || -f 'package-lock.json' ) {
     $is_node = 1;
 }
+my $is_nginx_done = 0;
 
 ## --------------------------------------------------------------------------------------------------------------------
 # There are a number of things we want to do when we deploy:
@@ -235,6 +236,7 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     run("sudo service nginx restart");
 }
 else {
+    $is_nginx_done = 1;
     msg("Nginx config already set up. You'll need to make changes manually to force any changes.");
 }
 
@@ -244,9 +246,13 @@ else {
 sep();
 title("CertBot");
 
-msg("");
+if ( $is_nginx_done ) {
+    msg("Since nginx was set up previously, you don't need to run");
+    msg("certbot now if you have already set up a certificate.");
+    msg("");
+}
+
 msg("Now run : sudo certbot --nginx");
-msg("");
 
 ## --------------------------------------------------------------------------------------------------------------------
 
