@@ -20,9 +20,13 @@ my ($name) = File::Basename::fileparse($dir);
 my $safe_name = $name;
 $safe_name =~ s/\./-/g;
 
-my $is_node = 0;
+my $is_node   = 0;
+my $is_golang = 0;
 if ( -f 'package.json' || -f 'package-lock.json' ) {
     $is_node = 1;
+}
+if ( -f 'vendor/manifest' ) {
+    $is_golang = 1;
 }
 my $is_nginx_done = 0;
 
@@ -44,6 +48,7 @@ msg("Current Dir : $dir");
 msg("Name        : $name");
 msg("Safe Name   : $safe_name");
 msg("Is Node.js? : $is_node");
+msg("Is GoLang?  : $is_golang");
 msg("Env         :");
 while (my ($k, $v) = each(%$env)) {
     msg(" - $k=$v")
@@ -111,8 +116,13 @@ else {
 
 if ( $is_node ) {
     sep();
-    title("Installing Packages");
+    title("Installing NPM Packages");
     run('npm install');
+}
+if ( $is_golang ) {
+    sep();
+    title("Building GoLang");
+    run('gb build');
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -158,6 +168,9 @@ push(@supervisor, "[program:$safe_name]\n");
 push(@supervisor, "directory = $dir\n");
 if ( $is_node ) {
     push(@supervisor, "command = node server.js\n");
+}
+elsif ( $is_golang ) {
+    push(@supervisor, "command = $env->{cmd}\n");
 }
 else {
     push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
