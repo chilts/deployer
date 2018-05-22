@@ -187,7 +187,7 @@ elsif ( $is_golang ) {
     push(@supervisor, "command = $env->{cmd}\n");
 }
 elsif ( $is_nebulous ) {
-    push(@supervisor, "command = ./node_modules/.bin/nebulous-server\n");
+    push(@supervisor, "command = $dir/node_modules/.bin/nebulous-server\n");
 }
 else {
     push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
