@@ -202,9 +202,13 @@ push(@supervisor, "stdout_logfile_backups=20\n");
 push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
 push(@supervisor, "stderr_logfile_maxbytes=50MB\n");
 push(@supervisor, "stderr_logfile_backups=20\n");
-if ( $is_node ) {
-    push(@supervisor, "environment = NODE_ENV=production\n");
+if ( $is_node || $is_nebulous ) {
+    push(@supervisor, "environment = NODE_ENV=production");
 }
+if ( $env->{port} ) {
+    push(@supervisor, ",PORT=$env->{port}");
+}
+push(@supervisor, "\n");
 
 # write this out to a file
 my $supervisor_fh = File::Temp->new();
