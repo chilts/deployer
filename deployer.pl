@@ -20,10 +20,18 @@ my ($name) = File::Basename::fileparse($dir);
 my $safe_name = $name;
 $safe_name =~ s/\./-/g;
 
-my $is_node   = 0;
-my $is_golang = 0;
+my $is_node     = 0;
+my $is_golang   = 0;
+my $is_nebulous = 0;
 if ( -f 'package.json' || -f 'package-lock.json' ) {
-    $is_node = 1;
+    my $start = `jq -r ".scripts.start" package.json`;
+    chomp $start;
+    if ( defined $start && $start eq 'nebulous-server' ) {
+        $is_nebulous = 1;
+    }
+    else {
+        $is_node = 1;
+    }
 }
 if ( -f 'vendor/manifest' ) {
     $is_golang = 1;
@@ -43,13 +51,14 @@ if ( -f 'deployer/env' ) {
     }
 }
 
-msg("User        : $ENV{USER}");
-msg("Current Dir : $dir");
-msg("Name        : $name");
-msg("Safe Name   : $safe_name");
-msg("Is Node.js? : $is_node");
-msg("Is GoLang?  : $is_golang");
-msg("Env         :");
+msg("User         : $ENV{USER}");
+msg("Current Dir  : $dir");
+msg("Name         : $name");
+msg("Safe Name    : $safe_name");
+msg("Is Node.js?  : $is_node");
+msg("Is GoLang?   : $is_golang");
+msg("Is Nebulous? : $is_nebulous");
+msg("Env          :");
 while (my ($k, $v) = each(%$env)) {
     msg(" - $k=$v")
 }
@@ -124,6 +133,11 @@ if ( $is_golang ) {
     title("Building GoLang");
     run('gb build');
 }
+if ( $is_nebulous ) {
+    sep();
+    title("Installing NPM Packages");
+    run('npm install');
+}
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Dirs
@@ -171,6 +185,9 @@ if ( $is_node ) {
 }
 elsif ( $is_golang ) {
     push(@supervisor, "command = $env->{cmd}\n");
+}
+elsif ( $is_nebulous ) {
+    push(@supervisor, "command = ./node_modules/.bin/nebulous-server\n");
 }
 else {
     push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
