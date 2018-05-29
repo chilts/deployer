@@ -50,6 +50,9 @@ if ( -f 'deployer/env' ) {
         %$env = $cfg->vars();
     }
 }
+if ( !defined $env->{www} ) {
+    $env->{www} = 1;
+}
 
 msg("User         : $ENV{USER}");
 msg("Current Dir  : $dir");
@@ -246,11 +249,13 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     push(@nginx, "    }\n");
     push(@nginx, "}\n");
     push(@nginx, "\n");
-    push(@nginx, "server {\n");
-    push(@nginx, "    listen      80;\n");
-    push(@nginx, "    server_name www.$domain;\n");
-    push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
-    push(@nginx, "}\n");
+    if ( $env->{www} ) {
+        push(@nginx, "server {\n");
+        push(@nginx, "    listen      80;\n");
+        push(@nginx, "    server_name www.$domain;\n");
+        push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
+        push(@nginx, "}\n");
+    }
 
     # write this out to a file
     my $nginx_fh = File::Temp->new();
