@@ -8,6 +8,7 @@ use File::Temp ();
 use IPC::Run3;
 use Cwd qw();
 use File::Basename qw();
+use JSON::Any;
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Setup
@@ -24,9 +25,9 @@ my $is_node     = 0;
 my $is_golang   = 0;
 my $is_nebulous = 0;
 if ( -f 'package.json' || -f 'package-lock.json' ) {
-    my $start = `jq -r ".scripts.start" package.json`;
+    my $start = `jq -r ".dependencies.nebulous-server" package.json`;
     chomp $start;
-    if ( defined $start && $start eq 'nebulous-server' ) {
+    if ( defined $start && $start ne 'null' ) {
         $is_nebulous = 1;
     }
     else {
