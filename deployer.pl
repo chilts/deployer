@@ -50,7 +50,10 @@ if ( -f 'deployer/env' ) {
         %$env = $cfg->vars();
     }
 }
-if ( !defined $env->{www} ) {
+if ( defined $env->{www} ) {
+    $env->{www} += 0;
+}
+else {
     $env->{www} = 1;
 }
 
@@ -228,8 +231,6 @@ run("sudo service supervisor restart");
 ## --------------------------------------------------------------------------------------------------------------------
 # Nginx
 
-# ToDo: check if this is a naked domain or a sub-domain.
-
 sep();
 title("Nginx");
 
@@ -249,6 +250,7 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     push(@nginx, "    }\n");
     push(@nginx, "}\n");
     push(@nginx, "\n");
+
     if ( $env->{www} ) {
         push(@nginx, "server {\n");
         push(@nginx, "    listen      80;\n");
