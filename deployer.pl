@@ -96,6 +96,32 @@ run('git fetch --verbose');
 run('git rebase origin/master');
 
 ## --------------------------------------------------------------------------------------------------------------------
+# Update Packages
+
+if ( $is_node ) {
+    sep();
+    title("Installing NPM Packages");
+    run('npm install');
+}
+if ( $is_golang ) {
+    sep();
+    title("Building GoLang");
+    run('gb build');
+}
+if ( $is_nebulous ) {
+    sep();
+    title("Installing NPM Packages");
+    run('npm install');
+}
+
+## --------------------------------------------------------------------------------------------------------------------
+# Make
+
+sep();
+title("Making the Project");
+run("make");
+
+## --------------------------------------------------------------------------------------------------------------------
 # Minify
 
 sep();
@@ -125,25 +151,6 @@ if ( -f "deployer/minify" ) {
 }
 else {
     msg("No 'minify' file.");
-}
-
-## --------------------------------------------------------------------------------------------------------------------
-# Update Packages
-
-if ( $is_node ) {
-    sep();
-    title("Installing NPM Packages");
-    run('npm install');
-}
-if ( $is_golang ) {
-    sep();
-    title("Building GoLang");
-    run('gb build');
-}
-if ( $is_nebulous ) {
-    sep();
-    title("Installing NPM Packages");
-    run('npm install');
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
