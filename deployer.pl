@@ -300,8 +300,9 @@ if ( $is_nginx_done ) {
     msg("certbot now if you have already set up a certificate.");
     msg("");
 }
-
-msg("Now run : sudo certbot --nginx");
+else {
+    msg("Now run : sudo certbot --nginx");
+}
 
 ## --------------------------------------------------------------------------------------------------------------------
 
