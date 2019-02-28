@@ -222,6 +222,9 @@ if ( $is_node || $is_nebulous ) {
 if ( $env->{port} ) {
     push(@supervisor, ",PORT=$env->{port}");
 }
+if ( $env->{apex} ) {
+    push(@supervisor, ",APEX=$env->{apex}");
+}
 push(@supervisor, "\n");
 
 # write this out to a file
