@@ -119,7 +119,12 @@ if ( $is_nebulous ) {
 
 sep();
 title("Making the Project");
-run("make");
+if ( -f "Makefile" ) {
+    run("make");
+}
+else {
+    msg("No 'Makefile'.");
+}
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Minify
