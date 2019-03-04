@@ -260,8 +260,10 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     push(@nginx, "    listen      80;\n");
     push(@nginx, "    server_name $domain;\n");
     push(@nginx, "    location    / {\n");
-    push(@nginx, "        proxy_set_header   X-Real-IP \$remote_addr;\n");
-    push(@nginx, "        proxy_set_header   Host      \$http_host;\n");
+    push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
+    push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
+    push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
+    push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
     push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
     push(@nginx, "    }\n");
     push(@nginx, "}\n");
