@@ -69,7 +69,23 @@ msg("Is GoLang?   : $is_golang");
 msg("Is Nebulous? : $is_nebulous");
 msg("Env          :");
 while (my ($k, $v) = each(%$env)) {
-    msg(" - $k=$v")
+    msg(" - $k=$v");
+    if ($v eq "?") {
+        # firstly, see if a `deployer/ENV_$k` file exists
+        my $filename = "deployer/ENV_$k";
+        if ( -f $filename ) {
+            my $value = read_file($filename);
+            chomp $value;
+            $env->{$k} = $value;
+        }
+        else {
+            print " Value? - $k=";
+            my $value = <STDIN>;
+            $env->{$k} = $value;
+            write_file($filename, $value);
+        }
+        msg(" - $k=$env->{$k}");
+    }
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
