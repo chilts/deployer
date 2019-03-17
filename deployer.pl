@@ -52,9 +52,11 @@ if ( -f 'deployer/env' ) {
     }
 }
 if ( defined $env->{www} ) {
+    # convert to integer
     $env->{www} += 0;
 }
 else {
+    # the default is to *add* a "server_name www.$domain;"
     $env->{www} = 1;
 }
 
@@ -262,7 +264,10 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     push(@nginx, "    location    / {\n");
     push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
     push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
-    push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
+    # chilts@zool:~$ sudo nginx -t
+    # nginx: [emerg] unknown "proxy_x_forwarded_proto" variable
+    # nginx: configuration file /etc/nginx/nginx.conf test failed
+    # push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
     push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
     push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
     push(@nginx, "    }\n");
