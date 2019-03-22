@@ -248,7 +248,7 @@ push(@supervisor, "stderr_logfile_maxbytes = 50MB\n");
 push(@supervisor, "stderr_logfile_backups = 20\n");
 
 # environment
-push(@supervisor, "environment = APEX=\"$apex\",port=\"$port\"");
+push(@supervisor, "environment = APEX=\"$apex\",PORT=\"$port\"");
 if ( $is_node || $is_nebulous ) {
     push(@supervisor, ",NODE_ENV=\"production\"");
 }
