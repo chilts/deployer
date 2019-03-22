@@ -44,20 +44,22 @@ my $is_nginx_done = 0;
 
 title("The Deployer is Deploying - Stand Back!");
 
+my $setting = {};
+my $settings = new Config::Simple('deployer/settings');
+if ( defined $settings ) {
+    %$setting = $settings->vars();
+}
+my $apex = $setting->{apex};
+my $port = $setting->{port};
+my $www = defined $setting->{www} ? ($setting->{www}+0) : 1; # default: add the `www.$apex` server
+my $cmd = $setting->{cmd};
+
 my $env = {};
 if ( -f 'deployer/env' ) {
     my $cfg = new Config::Simple('deployer/env');
     if ( defined $cfg ) {
         %$env = $cfg->vars();
     }
-}
-if ( defined $env->{www} ) {
-    # convert to integer
-    $env->{www} += 0;
-}
-else {
-    # the default is to *add* a "server_name www.$domain;"
-    $env->{www} = 1;
 }
 
 msg("User         : $ENV{USER}");
@@ -67,6 +69,11 @@ msg("Safe Name    : $safe_name");
 msg("Is Node.js?  : $is_node");
 msg("Is GoLang?   : $is_golang");
 msg("Is Nebulous? : $is_nebulous");
+msg("Settings     :");
+msg(" - apex=$apex");
+msg(" - port=$port");
+msg(" - www=$www");
+msg(" - cmd=" . ($cmd || ''));
 msg("Env          :");
 while (my ($k, $v) = each(%$env)) {
     msg(" - $k=$v");
@@ -220,8 +227,8 @@ push(@supervisor, "directory = $dir\n");
 if ( $is_node ) {
     push(@supervisor, "command = node server.js\n");
 }
-elsif ( $is_golang ) {
-    push(@supervisor, "command = $env->{cmd}\n");
+elsif ( $cmd ) {
+    push(@supervisor, "command = $cmd\n");
 }
 elsif ( $is_nebulous ) {
     push(@supervisor, "command = npm start\n");
@@ -239,14 +246,15 @@ push(@supervisor, "stdout_logfile_backups=20\n");
 push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
 push(@supervisor, "stderr_logfile_maxbytes=50MB\n");
 push(@supervisor, "stderr_logfile_backups=20\n");
+
+# environment
+push(@supervisor, "environment = APEX=\"$apex\",port=\"$port\"");
 if ( $is_node || $is_nebulous ) {
-    push(@supervisor, "environment = NODE_ENV=production");
+    push(@supervisor, ",NODE_ENV=\"production\"");
 }
-if ( $env->{port} ) {
-    push(@supervisor, ",PORT=$env->{port}");
-}
-if ( $env->{apex} ) {
-    push(@supervisor, ",APEX=$env->{apex}");
+# copy all ENV VARS over
+while (my ($k, $v) = each(%$env)) {
+    push(@supervisor, ",$k=\"$v\"");
 }
 push(@supervisor, "\n");
 
@@ -268,15 +276,12 @@ run("sudo service supervisor restart");
 sep();
 title("Nginx");
 
-# assume naked domain for now
-my $domain = $name;
-
 # Skip if the Nginx config already exists.
 if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     my @nginx;
     push(@nginx, "server {\n");
     push(@nginx, "    listen      80;\n");
-    push(@nginx, "    server_name $domain;\n");
+    push(@nginx, "    server_name $apex;\n");
     push(@nginx, "    location    / {\n");
     push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
     push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
@@ -285,16 +290,16 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     # nginx: configuration file /etc/nginx/nginx.conf test failed
     # push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
     push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
-    push(@nginx, "        proxy_pass         http://localhost:$env->{port};\n");
+    push(@nginx, "        proxy_pass         http://localhost:$port;\n");
     push(@nginx, "    }\n");
     push(@nginx, "}\n");
     push(@nginx, "\n");
 
-    if ( $env->{www} ) {
+    if ( $www ) {
         push(@nginx, "server {\n");
         push(@nginx, "    listen      80;\n");
-        push(@nginx, "    server_name www.$domain;\n");
-        push(@nginx, "    return      301 \$scheme://$domain\$request_uri;\n");
+        push(@nginx, "    server_name www.$apex;\n");
+        push(@nginx, "    return      301 \$scheme://$apex\$request_uri;\n");
         push(@nginx, "}\n");
     }
 
@@ -306,11 +311,11 @@ if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
     msg(@nginx);
     write_file($nginx_fh, @nginx);
 
-    run("sudo cp $nginx_filename /etc/nginx/sites-available/$domain.conf");
+    run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
 
     # only do the symlink if it doesn't already exist
-    if ( ! -l "/etc/nginx/sites-enabled/$domain.conf" ) {
-        run("sudo ln -s /etc/nginx/sites-available/$domain.conf /etc/nginx/sites-enabled/$domain.conf");
+    if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
+        run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
     }
 
     run("sudo service nginx restart");
