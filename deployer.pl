@@ -335,10 +335,13 @@ if ( $is_nginx_done ) {
     msg("Since nginx was set up previously, you don't need to run");
     msg("certbot now if you have already set up a certificate.");
     msg("");
+    msg("If this message is incorrect, you may run it with:");
 }
 else {
-    msg("Now run : sudo certbot --nginx");
+    msg("To tell CertBot about this new Nginx config, you can run:");
 }
+msg("");
+msg("\$ sudo certbot --nginx");
 
 ## --------------------------------------------------------------------------------------------------------------------
 
