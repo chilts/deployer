@@ -11,7 +11,20 @@ use File::Basename qw();
 use JSON::Any;
 
 ## --------------------------------------------------------------------------------------------------------------------
+# Always update the code first, since `deployer/settings` or `deployer/env` need to be read after an update.
+
+title("The Deployer is Deploying - Stand Back!");
+
+sep();
+title("Updating the Code");
+run('git fetch --verbose');
+run('git rebase origin/master');
+
+## --------------------------------------------------------------------------------------------------------------------
 # Setup
+
+sep();
+title("Running Setup");
 
 # You wouldn't do this normally since it depends on an ENV var, instead use User or File::HomeDir,
 my $username = $ENV{USER};
@@ -38,11 +51,6 @@ if ( -f 'vendor/manifest' ) {
     $is_golang = 1;
 }
 my $is_nginx_done = 0;
-
-## --------------------------------------------------------------------------------------------------------------------
-# There are a number of things we want to do when we deploy:
-
-title("The Deployer is Deploying - Stand Back!");
 
 my $setting = {};
 my $settings = new Config::Simple('deployer/settings');
@@ -111,14 +119,6 @@ if ( -f 'deployer/packages' ) {
 else {
     msg("No 'packages' file.");
 }
-
-## --------------------------------------------------------------------------------------------------------------------
-# Code
-
-sep();
-title("Updating the Code");
-run('git fetch --verbose');
-run('git rebase origin/master');
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Update Packages
