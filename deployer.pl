@@ -96,6 +96,7 @@ while (my ($k, $v) = each(%$env)) {
         else {
             print " Value? - $k=";
             my $value = <STDIN>;
+            chomp $value;
             $env->{$k} = $value;
             write_file($filename, $value);
         }
