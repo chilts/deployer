@@ -127,7 +127,7 @@ else {
 if ( $is_node ) {
     sep();
     title("Installing NPM Packages");
-    run('npm install');
+    run('npm ci');
 }
 if ( $is_golang ) {
     sep();
@@ -137,7 +137,7 @@ if ( $is_golang ) {
 if ( $is_nebulous ) {
     sep();
     title("Installing NPM Packages");
-    run('npm install');
+    run('npm ci');
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
