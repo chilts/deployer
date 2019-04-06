@@ -225,11 +225,11 @@ my @supervisor;
 # create each line
 push(@supervisor, "[program:$safe_name]\n");
 push(@supervisor, "directory = $dir\n");
-if ( $is_node ) {
-    push(@supervisor, "command = node server.js\n");
-}
-elsif ( $cmd ) {
+if ( $cmd ) {
     push(@supervisor, "command = $cmd\n");
+}
+elsif ( $is_node ) {
+    push(@supervisor, "command = node server.js\n");
 }
 elsif ( $is_nebulous ) {
     push(@supervisor, "command = npm start\n");
