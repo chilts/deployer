@@ -11,9 +11,14 @@ use File::Basename qw();
 use JSON::Any;
 
 ## --------------------------------------------------------------------------------------------------------------------
-# Always update the code first, since `deployer/settings` or `deployer/env` need to be read after an update.
 
 title("The Deployer is Deploying - Stand Back!");
+
+# check we can get sudo
+run("sudo echo");
+
+## --------------------------------------------------------------------------------------------------------------------
+# Always update the code first, since `deployer/settings` or `deployer/env` need to be read after an update.
 
 sep();
 title("Updating the Code");
