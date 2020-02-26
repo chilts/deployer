@@ -3,7 +3,7 @@ deploy:
 	scp deployer.pl salty.chilts.org:~/bin
 	scp deployer.pl zool.webdev.sh:~/bin
 	scp deployer.pl lemmings.webdev.sh:~/bin
-	scp deployer.pl orion.nebulous.design:~/bin
+	# scp deployer.pl orion.nebulous.design:~/bin # no longer exists
 
 #old:
   # Don't need this stuff below, since we're not using this script for EasyBC!!!
