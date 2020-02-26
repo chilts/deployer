@@ -23,7 +23,7 @@ run("sudo echo");
 sep();
 title("Updating the Code");
 run('git fetch --verbose');
-run('git rebase origin/master');
+run('git rebase');
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Setup
