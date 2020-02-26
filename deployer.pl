@@ -181,7 +181,7 @@ if ( -f "deployer/minify" ) {
         }
         if ( $type eq 'jpg' ) {
             msg("Optimising JPG : $filename.jpg");
-            run("curl -X POST -s --form 'input=\@filename.jpg;type=image/jpg' https://jpgoptimiser.com/optimise > $filename.min.jpgg");
+            run("curl -X POST -s --form 'input=\@filename.jpg;type=image/jpg' https://jpgoptimiser.com/optimise > $filename.min.jpg");
         }
     }
 }
