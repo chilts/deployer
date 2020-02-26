@@ -274,7 +274,7 @@ write_file($supervisor_fh, @supervisor);
 
 run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
 
-run("sudo service supervisor restart");
+run("sudo supervisorctl restart $safe_name");
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Nginx
