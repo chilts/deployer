@@ -129,11 +129,13 @@ else {
 ## --------------------------------------------------------------------------------------------------------------------
 # Update Packages
 
-if ( $is_node ) {
-    sep();
-    title("Installing NPM Packages");
-    run('npm ci');
-}
+# if ( $is_node ) {
+#     sep();
+#     title("Installing NPM Packages");
+#     run('npm ci');
+#     run('npm run build');
+#     run('npm ci --production');
+# }
 if ( $is_golang ) {
     sep();
     title("Building GoLang");
