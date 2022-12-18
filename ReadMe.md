@@ -12,7 +12,8 @@ sudo apt-get install      \
   libconfig-simple-perl   \
   libfile-slurp-perl      \
   libipc-run3-perl        \
-  libjson-any-perl
+  libjson-any-perl        \
+  jq
 ```
 
 (Ends)
