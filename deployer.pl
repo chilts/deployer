@@ -55,6 +55,8 @@ if ( -f 'package.json' || -f 'package-lock.json' ) {
 if ( -f 'vendor/manifest' ) {
     $is_golang = 1;
 }
+my $is_nginx_certbot = 1;
+my $is_nginx_origin_cert = 0;
 my $is_nginx_done = 0;
 
 my $setting = {};
@@ -156,7 +158,7 @@ if ( -f "Makefile" ) {
     run("make");
 }
 else {
-    msg("No 'Makefile'.");
+    msg("No Makefile found");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -188,7 +190,7 @@ if ( -f "deployer/minify" ) {
     }
 }
 else {
-    msg("No 'minify' file.");
+    msg("No minify file found");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -197,14 +199,16 @@ else {
 sep();
 title("Creating Dirs");
 
-# for supervisord logging
-run("sudo mkdir -p /var/log/$name/");
-
-my @dirs = read_file('deployer/dirs');
-chomp @dirs;
-for my $line ( @dirs ) {
-    run("sudo mkdir -p $line");
-    run("sudo chown $username.$username $line");
+if ( -f "deployer/dirs" ) {
+    my @dirs = read_file('deployer/dirs');
+    chomp @dirs;
+    for my $line ( @dirs ) {
+        run("sudo mkdir -p $line");
+        run("sudo chown $username.$username $line");
+    }
+}
+else {
+    msg("No dirs file found");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -217,7 +221,7 @@ if ( -f "deployer/cron.d" ) {
     run("sudo cp deployer/cron.d /etc/cron.d/$safe_name");
 }
 else {
-    msg("No cron found");
+    msg("No cron.d file found");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -226,57 +230,98 @@ else {
 sep();
 title("Supervisor");
 
-# create each line of the supervisor file
-my @supervisor;
+if ( -f "deployer/supervisor" ) {
+    # for supervisord logging
+    run("sudo mkdir -p /var/log/$name/");
 
-# create each line
-push(@supervisor, "[program:$safe_name]\n");
-push(@supervisor, "directory = $dir\n");
-if ( $cmd ) {
-    push(@supervisor, "command = $cmd\n");
-}
-elsif ( $is_node ) {
-    push(@supervisor, "command = node server.js\n");
-}
-elsif ( $is_nebulous ) {
-    push(@supervisor, "command = npm start\n");
+    # create each line of the supervisor file
+    my @supervisor;
+
+    # create each line
+    push(@supervisor, "[program:$safe_name]\n");
+    push(@supervisor, "directory = $dir\n");
+    if ( $cmd ) {
+        push(@supervisor, "command = $cmd\n");
+    }
+    elsif ( $is_node ) {
+        push(@supervisor, "command = node server.js\n");
+    }
+    elsif ( $is_nebulous ) {
+        push(@supervisor, "command = npm start\n");
+    }
+    else {
+        push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
+    }
+    push(@supervisor, "user = $username\n");
+    push(@supervisor, "autostart = true\n");
+    push(@supervisor, "autorestart = true\n");
+    push(@supervisor, "start_retries = 3\n");
+    push(@supervisor, "stdout_logfile = /var/log/$name/stdout.log\n");
+    push(@supervisor, "stdout_logfile_maxbytes = 50MB\n");
+    push(@supervisor, "stdout_logfile_backups = 20\n");
+    push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
+    push(@supervisor, "stderr_logfile_maxbytes = 50MB\n");
+    push(@supervisor, "stderr_logfile_backups = 20\n");
+
+    # environment
+    push(@supervisor, "environment = APEX=\"$apex\",PORT=\"$port\"");
+    if ( $is_node || $is_nebulous ) {
+        push(@supervisor, ",NODE_ENV=\"production\"");
+    }
+    # copy all ENV VARS over
+    while (my ($k, $v) = each(%$env)) {
+        push(@supervisor, ",$k=\"$v\"");
+    }
+    push(@supervisor, "\n");
+
+    # write this out to a file
+    my $supervisor_fh = File::Temp->new();
+    my $supervisor_filename = $supervisor_fh->filename;
+
+    msg("Writing $supervisor_filename");
+    msg(@supervisor);
+    write_file($supervisor_fh, @supervisor);
+
+    run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
+
+    run("sudo supervisorctl restart $safe_name");
+
 }
 else {
-    push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
+    msg("No supervisor file found");
 }
-push(@supervisor, "user = $username\n");
-push(@supervisor, "autostart = true\n");
-push(@supervisor, "autorestart = true\n");
-push(@supervisor, "start_retries = 3\n");
-push(@supervisor, "stdout_logfile = /var/log/$name/stdout.log\n");
-push(@supervisor, "stdout_logfile_maxbytes = 50MB\n");
-push(@supervisor, "stdout_logfile_backups = 20\n");
-push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
-push(@supervisor, "stderr_logfile_maxbytes = 50MB\n");
-push(@supervisor, "stderr_logfile_backups = 20\n");
 
-# environment
-push(@supervisor, "environment = APEX=\"$apex\",PORT=\"$port\"");
-if ( $is_node || $is_nebulous ) {
-    push(@supervisor, ",NODE_ENV=\"production\"");
+## --------------------------------------------------------------------------------------------------------------------
+# Origin Certificate
+
+sep();
+title("Origin Certificate");
+
+if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pem" ) {
+    msg("It looks like you have all files of an Origin Certificate from Cloudflare.");
+    msg("");
+    msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
+    run("sudo cp deployer/apex.pem /etc/ssl/$apex.pem");
+    msg("");
+    msg("Decrypting 'apex.key.age' to 'apex.key");
+    run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
+    msg("");
+    msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");
+    run("sudo cp deployer/apex.key /etc/ssl/private/$apex.key");
+    msg("");
+    msg("Fixing ownership and permissions on '/etc/ssl/private/$apex.key");
+    run("sudo chown root.ssl-cert /etc/ssl/private/$apex.key");
+    run("sudo chmod 640 /etc/ssl/private/$apex.key");
+    msg("");
+    msg("Removing 'apex.key'");
+    run("rm deployer/apex.key");
+
+    $is_nginx_certbot = 0;
+    $is_nginx_origin_cert = 1;
 }
-# copy all ENV VARS over
-while (my ($k, $v) = each(%$env)) {
-    push(@supervisor, ",$k=\"$v\"");
+else {
+    msg("CertBot has not been requested for this install.");
 }
-push(@supervisor, "\n");
-
-# write this out to a file
-my $supervisor_fh = File::Temp->new();
-my $supervisor_filename = $supervisor_fh->filename;
-
-msg("Writing $supervisor_filename");
-msg(@supervisor);
-write_file($supervisor_fh, @supervisor);
-
-run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
-
-run("sudo supervisorctl restart $safe_name");
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Nginx
@@ -284,53 +329,64 @@ run("sudo supervisorctl restart $safe_name");
 sep();
 title("Nginx");
 
-# Skip if the Nginx config already exists.
-if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
-    my @nginx;
-    push(@nginx, "server {\n");
-    push(@nginx, "    listen      80;\n");
-    push(@nginx, "    server_name $apex;\n");
-    push(@nginx, "    location    / {\n");
-    push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
-    push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
-    # chilts@zool:~$ sudo nginx -t
-    # nginx: [emerg] unknown "proxy_x_forwarded_proto" variable
-    # nginx: configuration file /etc/nginx/nginx.conf test failed
-    # push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
-    push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
-    push(@nginx, "        proxy_pass         http://localhost:$port;\n");
-    push(@nginx, "    }\n");
-    push(@nginx, "}\n");
-    push(@nginx, "\n");
+# Firstly we need to figure out if we are doing an Origin Cert (from Cloudflare)
+# using CertBot (the default).
 
-    if ( $www ) {
+if ( $is_nginx_certbot ) {
+    # Skip if the Nginx config already exists.
+    if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
+        my @nginx;
         push(@nginx, "server {\n");
         push(@nginx, "    listen      80;\n");
-        push(@nginx, "    server_name www.$apex;\n");
-        push(@nginx, "    return      301 \$scheme://$apex\$request_uri;\n");
+        push(@nginx, "    server_name $apex;\n");
+        push(@nginx, "    location    / {\n");
+        push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
+        push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
+        # chilts@zool:~$ sudo nginx -t
+        # nginx: [emerg] unknown "proxy_x_forwarded_proto" variable
+        # nginx: configuration file /etc/nginx/nginx.conf test failed
+        # push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
+        push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
+        push(@nginx, "        proxy_pass         http://localhost:$port;\n");
+        push(@nginx, "    }\n");
         push(@nginx, "}\n");
+        push(@nginx, "\n");
+
+        if ( $www ) {
+            push(@nginx, "server {\n");
+            push(@nginx, "    listen      80;\n");
+            push(@nginx, "    server_name www.$apex;\n");
+            push(@nginx, "    return      301 \$scheme://$apex\$request_uri;\n");
+            push(@nginx, "}\n");
+        }
+
+        # write this out to a file
+        my $nginx_fh = File::Temp->new();
+        my $nginx_filename = $nginx_fh->filename;
+
+        msg("Writing $nginx_filename");
+        msg(@nginx);
+        write_file($nginx_fh, @nginx);
+
+        run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
+
+        # only do the symlink if it doesn't already exist
+        if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
+            run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+        }
+
+        run("sudo service nginx restart");
     }
-
-    # write this out to a file
-    my $nginx_fh = File::Temp->new();
-    my $nginx_filename = $nginx_fh->filename;
-
-    msg("Writing $nginx_filename");
-    msg(@nginx);
-    write_file($nginx_fh, @nginx);
-
-    run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
-
-    # only do the symlink if it doesn't already exist
-    if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
-        run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+    else {
+        $is_nginx_done = 1;
+        msg("Nginx config already set up. You'll need to make changes manually to force any changes.");
     }
-
-    run("sudo service nginx restart");
+}
+elsif ( $is_nginx_origin_cert ) {
+    msg("ToDo - Origin Cert!");
 }
 else {
-    $is_nginx_done = 1;
-    msg("Nginx config already set up. You'll need to make changes manually to force any changes.");
+    msg("No Nginx configuration is being created or written.");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -339,17 +395,22 @@ else {
 sep();
 title("CertBot");
 
-if ( $is_nginx_done ) {
-    msg("Since nginx was set up previously, you don't need to run");
-    msg("certbot now if you have already set up a certificate.");
+if ( -f "deployer/certbot" ) {
+    if ( $is_nginx_done ) {
+        msg("Since nginx was set up previously, you don't need to run");
+        msg("certbot again if you have already set up a certificate.");
+        msg("");
+        msg("If this message is incorrect, you may run it with:");
+    }
+    else {
+        msg("To tell CertBot about this new Nginx config, you can run:");
+    }
     msg("");
-    msg("If this message is incorrect, you may run it with:");
+    msg("\$ sudo certbot --nginx");
 }
 else {
-    msg("To tell CertBot about this new Nginx config, you can run:");
+    msg("CertBot has not been requested for this install.");
 }
-msg("");
-msg("\$ sudo certbot --nginx");
 
 ## --------------------------------------------------------------------------------------------------------------------
 

@@ -1,13 +1,11 @@
-deploy:
-	scp deployer.pl salty.chilts.org:~/bin
-	scp deployer.pl zool.webdev.sh:~/bin
-	scp deployer.pl lemmings.webdev.sh:~/bin
-	# scp deployer.pl orion.nebulous.design:~/bin # no longer exists
+all:
+	echo "Doing nothing here since we might just call 'make' during tests."
 
-#old:
-  # Don't need this stuff below, since we're not using this script for EasyBC!!!
-	# scp deployer.pl makamaka.easybc.nz:~/bin # deleted!
-	# scp deployer.pl makamaka.appsattic.com:~/bin # staging, xenial, Digital Ocean, NY1
-	# scp deployer.pl miro.easybc.co.nz:~/bin # production, xenial
+deploy:
+	scp deployer.pl speedball.chilts.org:~/bin
+#	scp deployer.pl salty.webdev.sh:~/bin       # dead
+#	scp deployer.pl zool.webdev.sh:~/bin        # dead
+#	scp deployer.pl lemmings.webdev.sh:~/bin    # dead
+#	scp deployer.pl orion.nebulous.design:~/bin # dead
 
 .PHONY: deploy
