@@ -383,7 +383,85 @@ if ( $is_nginx_certbot ) {
     }
 }
 elsif ( $is_nginx_origin_cert ) {
-    msg("ToDo - Origin Cert!");
+    msg("Origin Certificate from Cloudflare");
+
+    # Four configs:
+    # 1. secure apex
+    # 2. plaintext apex
+    # 3. secure www
+    # 4. plaintext www
+
+    my @nginx;
+
+    push(@nginx, "server {\n");
+    push(@nginx, "    listen              443;\n");
+    push(@nginx, "    server_name         $apex;\n");
+    push(@nginx, "    ssl                 on;\n");
+    push(@nginx, "    ssl_certificate     /etc/ssl/$apex.pem;\n");
+    push(@nginx, "    ssl_certificate_key /etc/ssl/private/$apex.key;\n");
+    push(@nginx, "    location            / {\n");
+    push(@nginx, "        proxy_set_header    X-Real-IP           \$remote_addr;\n");
+    push(@nginx, "        proxy_set_header    X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
+    # chilts@zool:~$ sudo nginx -t
+    # nginx: [emerg] unknown "proxy_x_forwarded_proto" variable
+    # nginx: configuration file /etc/nginx/nginx.conf test failed
+    # push(@nginx, "        proxy_set_header   X-Forwarded-Proto   \$proxy_x_forwarded_proto;\n");
+    push(@nginx, "        proxy_set_header    Host                \$http_host;\n");
+    push(@nginx, "        proxy_pass          http://localhost:$port;\n");
+    push(@nginx, "    }\n");
+    push(@nginx, "    access_log          /var/log/nginx/$apex.access.log;\n");
+    push(@nginx, "    error_log           /var/log/nginx/$apex.error.log;\n");
+    push(@nginx, "}\n");
+    push(@nginx, "\n");
+
+    push(@nginx, "server {\n");
+    push(@nginx, "    listen              80;\n");
+    push(@nginx, "    server_name         $apex;\n");
+    push(@nginx, "    access_log          /var/log/nginx/$apex.access.log;\n");
+    push(@nginx, "    error_log           /var/log/nginx/$apex.error.log;\n");
+    push(@nginx, "    return              301 https://$apex\$request_uri;\n");
+    push(@nginx, "}\n");
+    push(@nginx, "\n");
+
+    if ( $www ) {
+        push(@nginx, "server {\n");
+        push(@nginx, "    listen              443;\n");
+        push(@nginx, "    server_name         www.$apex;\n");
+        push(@nginx, "    ssl                 on;\n");
+        push(@nginx, "    ssl_certificate     /etc/ssl/$apex.pem;\n");
+        push(@nginx, "    ssl_certificate_key /etc/ssl/private/$apex.key;\n");
+        push(@nginx, "    access_log          /var/log/nginx/$apex.access.log;\n");
+        push(@nginx, "    error_log           /var/log/nginx/$apex.error.log;\n");
+        push(@nginx, "    return 301          https://$apex\$request_uri;\n");
+        push(@nginx, "}\n");
+        push(@nginx, "\n");
+
+        push(@nginx, "server {\n");
+        push(@nginx, "    listen              80;\n");
+        push(@nginx, "    server_name         www.$apex;\n");
+        push(@nginx, "    access_log          /var/log/nginx/$apex.access.log;\n");
+        push(@nginx, "    error_log           /var/log/nginx/$apex.error.log;\n");
+        push(@nginx, "    return              301 https://$apex\$request_uri;\n");
+        push(@nginx, "}\n");
+    }
+
+    # write this out to a file
+    my $nginx_fh = File::Temp->new();
+    my $nginx_filename = $nginx_fh->filename;
+
+    msg("Writing $nginx_filename");
+    msg(@nginx);
+    write_file($nginx_fh, @nginx);
+
+    run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
+    run("sudo chmod 644 /etc/nginx/sites-available/$apex.conf");
+
+    # only do the symlink if it doesn't already exist
+    if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
+        run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+    }
+
+    run("sudo service nginx restart");
 }
 else {
     msg("No Nginx configuration is being created or written.");
