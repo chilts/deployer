@@ -430,8 +430,8 @@ elsif ( $is_nginx_origin_cert ) {
         push(@nginx, "    ssl                 on;\n");
         push(@nginx, "    ssl_certificate     /etc/ssl/$apex.pem;\n");
         push(@nginx, "    ssl_certificate_key /etc/ssl/private/$apex.key;\n");
-        push(@nginx, "    access_log          /var/log/nginx/www.$apex.access.log;\n");
-        push(@nginx, "    error_log           /var/log/nginx/www.$apex.error.log;\n");
+        push(@nginx, "    access_log          /var/log/nginx/$apex-www.access.log;\n");
+        push(@nginx, "    error_log           /var/log/nginx/$apex-www.error.log;\n");
         push(@nginx, "    return 301          https://$apex\$request_uri;\n");
         push(@nginx, "}\n");
         push(@nginx, "\n");
@@ -439,8 +439,8 @@ elsif ( $is_nginx_origin_cert ) {
         push(@nginx, "server {\n");
         push(@nginx, "    listen              80;\n");
         push(@nginx, "    server_name         www.$apex;\n");
-        push(@nginx, "    access_log          /var/log/nginx/www.$apex.access.log;\n");
-        push(@nginx, "    error_log           /var/log/nginx/www.$apex.error.log;\n");
+        push(@nginx, "    access_log          /var/log/nginx/$apex-www.access.log;\n");
+        push(@nginx, "    error_log           /var/log/nginx/$apex-www.error.log;\n");
         push(@nginx, "    return              301 https://$apex\$request_uri;\n");
         push(@nginx, "}\n");
     }
