@@ -55,9 +55,24 @@ if ( -f 'package.json' || -f 'package-lock.json' ) {
 if ( -f 'vendor/manifest' ) {
     $is_golang = 1;
 }
-my $is_nginx_certbot = 1;
-my $is_nginx_origin_cert = 0;
+
+# figure out Nginx
+my $is_nginx_certbot = 0;
+my $is_nginx_origin_certificate = 0;
+my $is_nginx_tailscale = 0;
 my $is_nginx_done = 0;
+if ( -f "deployer/nginx-certbot" ) {
+    $is_nginx_certbot = 1;
+}
+elsif ( -f "deployer/nginx-origin-certificate" ) {
+    $is_nginx_origin_certificate = 1;
+}
+elsif ( -f "deployer/nginx-tailscale" ) {
+    $is_nginx_tailscale = 1;
+}
+else {
+    # nothing to do here
+}
 
 my $setting = {};
 my $settings = new Config::Simple('deployer/settings');
@@ -121,7 +136,7 @@ if ( -f 'deployer/packages' ) {
     my @pkgs = read_file('deployer/packages');
     chomp @pkgs;
     for my $pkg ( @pkgs ) {
-        run("dpkg-query --show $pkg");
+        run("apt policy $pkg");
     }
 }
 else {
@@ -297,42 +312,48 @@ else {
 sep();
 title("Origin Certificate");
 
-if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pem" ) {
-    msg("It looks like you have all files of an Origin Certificate from Cloudflare.");
-    msg("");
-    msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
-    run("sudo cp deployer/apex.pem /etc/ssl/$apex.pem");
-    msg("");
-    msg("Decrypting 'apex.key.age' to 'apex.key");
-    run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
-    msg("");
-    msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");
-    run("sudo cp deployer/apex.key /etc/ssl/private/$apex.key");
-    msg("");
-    msg("Fixing ownership and permissions on '/etc/ssl/private/$apex.key");
-    run("sudo chown root.ssl-cert /etc/ssl/private/$apex.key");
-    run("sudo chmod 640 /etc/ssl/private/$apex.key");
-    msg("");
-    msg("Removing 'apex.key'");
-    run("rm deployer/apex.key");
-
-    $is_nginx_certbot = 0;
-    $is_nginx_origin_cert = 1;
+if ( $is_nginx_origin_certificate ) {
+    # check we have all the files
+    # ( -f "deployer/key.age" ) <- no longer needed!
+    if ( -f "deployer/key.age" && -f "deployer/apex.pem" && -f "deployer/apex.key.age" ) {
+        msg("It looks like you have all files of an Origin Certificate from Cloudflare.");
+        msg("");
+        msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
+        run("sudo cp deployer/apex.pem /etc/ssl/$apex.pem");
+        msg("");
+        msg("Decrypting 'apex.key.age' to 'apex.key");
+        run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
+        msg("");
+        msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");
+        run("sudo cp deployer/apex.key /etc/ssl/private/$apex.key");
+        msg("");
+        msg("Fixing ownership and permissions on '/etc/ssl/private/$apex.key");
+        run("sudo chown root.ssl-cert /etc/ssl/private/$apex.key");
+        run("sudo chmod 640 /etc/ssl/private/$apex.key");
+        msg("");
+        msg("Removing 'apex.key'");
+        run("rm deployer/apex.key");
+    }
+    else {
+        msg("Missing file(s) for Nginx Origin Certificate: key.age, apex.key.age, apex.pem");
+    }
 }
 else {
-    msg("CertBot has not been requested for this install.");
+    msg("No Origin Certificate configured.");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Nginx
 
 sep();
-title("Nginx");
+title("Nginx (CertBot, Origin Certificate, Tailscale)");
 
 # Firstly we need to figure out if we are doing an Origin Cert (from Cloudflare)
 # using CertBot (the default).
 
 if ( $is_nginx_certbot ) {
+    msg("Nginx with CertBot");
+
     # Skip if the Nginx config already exists.
     if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
         my @nginx;
@@ -375,6 +396,7 @@ if ( $is_nginx_certbot ) {
             run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
         }
 
+        # restart Nginx
         run("sudo service nginx restart");
     }
     else {
@@ -382,8 +404,8 @@ if ( $is_nginx_certbot ) {
         msg("Nginx config already set up. You'll need to make changes manually to force any changes.");
     }
 }
-elsif ( $is_nginx_origin_cert ) {
-    msg("Origin Certificate from Cloudflare");
+elsif ( $is_nginx_origin_certificate ) {
+    msg("Nginx with Origin Certificate from Cloudflare");
 
     # Four configs:
     # 1. secure apex
@@ -461,6 +483,76 @@ elsif ( $is_nginx_origin_cert ) {
         run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
     }
 
+    # restart Nginx
+    run("sudo service nginx restart");
+}
+elsif ( $is_nginx_tailscale ) {
+    msg("Nginx with Tailscale Auth.");
+
+    # From : https://tailscale.com/blog/tailscale-auth-nginx/
+
+    my @nginx;
+    push(@nginx, "server {\n");
+    push(@nginx, "    listen        80;\n");
+    push(@nginx, "    server_name   $apex;\n");
+    push(@nginx, "    location      /auth/tailscale {\n");
+    push(@nginx, "        internal;\n");
+    push(@nginx, "        proxy_pass http://unix:/run/tailscale.nginx-auth.sock;\n");
+    push(@nginx, "        proxy_pass_request_body off;\n");
+    push(@nginx, "        proxy_set_header Host \$http_host;\n");
+    push(@nginx, "        proxy_set_header Remote-Addr \$remote_addr;\n");
+    push(@nginx, "        proxy_set_header Remote-Port \$remote_port;\n");
+    push(@nginx, "        proxy_set_header Original-URI \$request_uri;\n");
+    push(@nginx, "    }\n");
+    push(@nginx, "    location / {\n");
+    push(@nginx, "        auth_request       /auth/tailscale;\n");
+    push(@nginx, "        auth_request_set   \$auth_user \$upstream_http_tailscale_user;\n");
+    push(@nginx, "        auth_request_set   \$auth_name \$upstream_http_tailscale_name;\n");
+    push(@nginx, "        auth_request_set   \$auth_login \$upstream_http_tailscale_login;\n");
+    push(@nginx, "        auth_request_set   \$auth_tailnet \$upstream_http_tailscale_tailnet;\n");
+    push(@nginx, "        auth_request_set   \$auth_profile_picture \$upstream_http_tailscale_profile_picture;\n");
+    push(@nginx, "        proxy_set_header   X-Webauth-User \"\$auth_user\";\n");
+    push(@nginx, "        proxy_set_header   X-Webauth-Name \"\$auth_name\";\n");
+    push(@nginx, "        proxy_set_header   X-Webauth-Login \"\$auth_login\";\n");
+    push(@nginx, "        proxy_set_header   X-Webauth-Tailnet \"\$auth_tailnet\";\n");
+    push(@nginx, "        proxy_set_header   X-Webauth-Profile-Picture \"\$auth_profile_picture\";\n");
+    push(@nginx, "        proxy_set_header   X-Real-IP           \$remote_addr;\n");
+    push(@nginx, "        proxy_set_header   X-Forwarded-For     \$proxy_add_x_forwarded_for;\n");
+    push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
+    push(@nginx, "        proxy_pass         http://localhost:$port;\n");
+    push(@nginx, "    }\n");
+    push(@nginx, "    access_log    /var/log/nginx/$apex.access.log;\n");
+    push(@nginx, "    error_log     /var/log/nginx/$apex.error.log;\n");
+    push(@nginx, "}\n");
+    push(@nginx, "\n");
+
+    if ( $www ) {
+        # just like CertBot, a simple redirect will suffice.
+        push(@nginx, "server {\n");
+        push(@nginx, "    listen        80;\n");
+        push(@nginx, "    server_name   www.$apex;\n");
+        push(@nginx, "    access_log    /var/log/nginx/$apex.access.log;\n");
+        push(@nginx, "    error_log     /var/log/nginx/$apex.error.log;\n");
+        push(@nginx, "    return        301 \$scheme://$apex\$request_uri;\n");
+        push(@nginx, "}\n");
+    }
+
+    # write this out to a file
+    my $nginx_fh = File::Temp->new();
+    my $nginx_filename = $nginx_fh->filename;
+
+    msg("Writing $nginx_filename");
+    msg(@nginx);
+    write_file($nginx_fh, @nginx);
+
+    run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
+
+    # only do the symlink if it doesn't already exist
+    if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
+        run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+    }
+
+    # restart Nginx
     run("sudo service nginx restart");
 }
 else {
@@ -473,7 +565,7 @@ else {
 sep();
 title("CertBot");
 
-if ( -f "deployer/certbot" ) {
+if ( $is_nginx_certbot ) {
     if ( $is_nginx_done ) {
         msg("Since nginx was set up previously, you don't need to run");
         msg("certbot again if you have already set up a certificate.");
