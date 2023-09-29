@@ -41,16 +41,8 @@ $safe_name =~ s/\./-/g;
 
 my $is_node     = 0;
 my $is_golang   = 0;
-my $is_nebulous = 0;
 if ( -f 'package.json' || -f 'package-lock.json' ) {
-    my $start = `jq -r '.dependencies."nebulous-server"' package.json`;
-    chomp $start;
-    if ( defined $start && $start ne 'null' ) {
-        $is_nebulous = 1;
-    }
-    else {
-        $is_node = 1;
-    }
+    $is_node = 1;
 }
 if ( -f 'vendor/manifest' ) {
     $is_golang = 1;
@@ -98,7 +90,6 @@ msg("Name         : $name");
 msg("Safe Name    : $safe_name");
 msg("Is Node.js?  : $is_node");
 msg("Is GoLang?   : $is_golang");
-msg("Is Nebulous? : $is_nebulous");
 msg("Settings     :");
 msg(" - apex=$apex");
 msg(" - port=$port");
@@ -146,22 +137,17 @@ else {
 ## --------------------------------------------------------------------------------------------------------------------
 # Update Packages
 
-# if ( $is_node ) {
-#     sep();
-#     title("Installing NPM Packages");
-#     run('npm ci');
-#     run('npm run build');
-#     run('npm ci --production');
-# }
 if ( $is_golang ) {
     sep();
     title("Building GoLang");
     run('gb build');
 }
-if ( $is_nebulous ) {
+if ( $is_node ) {
     sep();
     title("Installing NPM Packages");
     run('npm ci');
+    # run('npm run build');
+    # run('npm ci --production');
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
@@ -261,9 +247,6 @@ if ( -f "deployer/supervisor" ) {
     elsif ( $is_node ) {
         push(@supervisor, "command = node server.js\n");
     }
-    elsif ( $is_nebulous ) {
-        push(@supervisor, "command = npm start\n");
-    }
     else {
         push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
     }
@@ -280,7 +263,7 @@ if ( -f "deployer/supervisor" ) {
 
     # environment
     push(@supervisor, "environment = APEX=\"$apex\",PORT=\"$port\"");
-    if ( $is_node || $is_nebulous ) {
+    if ( $is_node ) {
         push(@supervisor, ",NODE_ENV=\"production\"");
     }
     # copy all ENV VARS over
