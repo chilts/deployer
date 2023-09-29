@@ -38,6 +38,7 @@ Note that most of these steps are optional except 1-4 which are compulsory.
 14. creates an Nginx file to be able to proxy through:
   (a) for CertBot
   (b) with a Cloudflare Origin Certificate
+  (c) using the Tailscale Authentication for Nginx mod
 15. runs CertBot if asked for
 
 Note: deployer.pl will add the following ENV VARS where needed without them
