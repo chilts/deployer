@@ -320,7 +320,7 @@ if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pe
     $is_nginx_origin_cert = 1;
 }
 else {
-    msg("CertBot has not been requested for this install.");
+    msg("An Origin Certificate has not been requested for this install.");
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
