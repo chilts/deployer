@@ -256,10 +256,10 @@ if ( -f "deployer/supervisor" ) {
     push(@supervisor, "autostart = true\n");
     push(@supervisor, "autorestart = true\n");
     push(@supervisor, "start_retries = 3\n");
-    push(@supervisor, "stdout_logfile = /var/log/$name/stdout.log\n");
+    push(@supervisor, "stdout_logfile = /var/log/supervisor/$name/stdout.log\n");
     push(@supervisor, "stdout_logfile_maxbytes = 50MB\n");
     push(@supervisor, "stdout_logfile_backups = 20\n");
-    push(@supervisor, "stderr_logfile = /var/log/$name/stderr.log\n");
+    push(@supervisor, "stderr_logfile = /var/log/supervisor/$name/stderr.log\n");
     push(@supervisor, "stderr_logfile_maxbytes = 50MB\n");
     push(@supervisor, "stderr_logfile_backups = 20\n");
 
@@ -349,6 +349,8 @@ if ( $is_nginx_certbot ) {
         push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
         push(@nginx, "        proxy_pass         http://localhost:$port;\n");
         push(@nginx, "    }\n");
+        push(@nginx, "    access_log /var/log/nginx/$apex.access.log;\n");
+        push(@nginx, "    error_log /var/log/nginx/$apex.error.log;\n");
         push(@nginx, "}\n");
         push(@nginx, "\n");
 
@@ -356,6 +358,8 @@ if ( $is_nginx_certbot ) {
             push(@nginx, "server {\n");
             push(@nginx, "    listen      80;\n");
             push(@nginx, "    server_name www.$apex;\n");
+            push(@nginx, "    access_log /var/log/nginx/www.$apex.access.log;\n");
+            push(@nginx, "    error_log /var/log/nginx/www.$apex.error.log;\n");
             push(@nginx, "    return      301 \$scheme://$apex\$request_uri;\n");
             push(@nginx, "}\n");
         }
