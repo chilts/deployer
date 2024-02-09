@@ -143,25 +143,6 @@ else {
 }
 
 ## --------------------------------------------------------------------------------------------------------------------
-# Update Packages
-
-if ( $is_node ) {
-    sep();
-    title("Installing NPM Packages");
-    run('npm ci');
-}
-if ( $is_golang ) {
-    sep();
-    title("Building GoLang");
-    run('gb build');
-}
-if ( $is_nebulous ) {
-    sep();
-    title("Installing NPM Packages");
-    run('npm ci');
-}
-
-## --------------------------------------------------------------------------------------------------------------------
 # Make
 
 sep();
@@ -261,18 +242,7 @@ if ( -f "deployer/supervisor" ) {
     # create each line
     push(@supervisor, "[program:$safe_name]\n");
     push(@supervisor, "directory = $dir\n");
-    if ( $cmd ) {
-        push(@supervisor, "command = $cmd\n");
-    }
-    elsif ( $is_node ) {
-        push(@supervisor, "command = node server.js\n");
-    }
-    elsif ( $is_nebulous ) {
-        push(@supervisor, "command = npm start\n");
-    }
-    else {
-        push(@supervisor, "command = echo 'Error: Unknown deployer command.'\n");
-    }
+    push(@supervisor, "command = $cmd\n");
     push(@supervisor, "user = $username\n");
     push(@supervisor, "autostart = true\n");
     push(@supervisor, "autorestart = true\n");
