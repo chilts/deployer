@@ -42,22 +42,6 @@ $safe_name =~ s/\./-/g;
 print "name = $name\n";
 print "safe_name = $safe_name\n";
 
-my $is_node     = 0;
-my $is_golang   = 0;
-my $is_nebulous = 0;
-if ( -f 'package.json' || -f 'package-lock.json' ) {
-    my $start = `jq -r '.dependencies."nebulous-server"' package.json`;
-    chomp $start;
-    if ( defined $start && $start ne 'null' ) {
-        $is_nebulous = 1;
-    }
-    else {
-        $is_node = 1;
-    }
-}
-if ( -f 'vendor/manifest' ) {
-    $is_golang = 1;
-}
 my $is_nginx_certbot = 1;
 my $is_nginx_origin_cert = 0;
 my $is_nginx_done = 0;
@@ -74,9 +58,6 @@ msg("User         : $ENV{USER}");
 msg("Current Dir  : $dir");
 msg("Name         : $name");
 msg("Safe Name    : $safe_name");
-msg("Is Node.js?  : $is_node");
-msg("Is GoLang?   : $is_golang");
-msg("Is Nebulous? : $is_nebulous");
 msg("Env          :");
 while (my ($k, $v) = each(%$env)) {
     msg(" - $k=$v");
@@ -255,10 +236,7 @@ if ( -f "deployer/supervisor" ) {
     push(@supervisor, "stderr_logfile_backups = 20\n");
 
     # environment
-    push(@supervisor, "environment = APEX=\"$apex\",PORT=\"$port\"");
-    if ( $is_node || $is_nebulous ) {
-        push(@supervisor, ",NODE_ENV=\"production\"");
-    }
+    push(@supervisor, "environment = NODE_ENV=\"production\"");
     # copy all ENV VARS over
     while (my ($k, $v) = each(%$env)) {
         push(@supervisor, ",$k=\"$v\"");
