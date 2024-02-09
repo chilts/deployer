@@ -18,7 +18,7 @@ title("The Deployer is Deploying - Stand Back!");
 run("sudo echo");
 
 ## --------------------------------------------------------------------------------------------------------------------
-# Always update the code first, since `deployer/settings` or `deployer/env` need to be read after an update.
+# Always update the code first since `deployer/env` needs to be read after an update.
 
 sep();
 title("Updating the Code");
@@ -38,6 +38,9 @@ my $dir = Cwd::cwd();
 my ($name) = File::Basename::fileparse($dir);
 my $safe_name = $name;
 $safe_name =~ s/\./-/g;
+
+print "name = $name\n";
+print "safe_name = $safe_name\n";
 
 my $is_node     = 0;
 my $is_golang   = 0;
@@ -59,16 +62,6 @@ my $is_nginx_certbot = 1;
 my $is_nginx_origin_cert = 0;
 my $is_nginx_done = 0;
 
-my $setting = {};
-my $settings = new Config::Simple('deployer/settings');
-if ( defined $settings ) {
-    %$setting = $settings->vars();
-}
-my $apex = $setting->{apex};
-my $port = $setting->{port};
-my $www = defined $setting->{www} ? ($setting->{www}+0) : 1; # default: add the `www.$apex` server
-my $cmd = $setting->{cmd};
-
 my $env = {};
 if ( -f 'deployer/env' ) {
     my $cfg = new Config::Simple('deployer/env');
@@ -84,11 +77,6 @@ msg("Safe Name    : $safe_name");
 msg("Is Node.js?  : $is_node");
 msg("Is GoLang?   : $is_golang");
 msg("Is Nebulous? : $is_nebulous");
-msg("Settings     :");
-msg(" - apex=$apex");
-msg(" - port=$port");
-msg(" - www=$www");
-msg(" - cmd=" . ($cmd || ''));
 msg("Env          :");
 while (my ($k, $v) = each(%$env)) {
     msg(" - $k=$v");
@@ -110,6 +98,32 @@ while (my ($k, $v) = each(%$env)) {
         msg(" - $k=$env->{$k}");
     }
 }
+
+# overwrite these since we need to set them, not from the env.
+$env->{NAME} = $name;
+$env->{SAFE_NAME} = $safe_name;
+
+# check we have some env vars
+my @requireds = (
+    'NAME',
+    'APEX',
+    'PORT',
+    'WWW',
+    'CMD',
+);
+for my $required ( @requireds ) {
+    unless ( exists $env->{$required} && length($env->{$required}) ) {
+        print STDERR "Env var '$required' is required\n";
+        exit 2;
+    }
+}
+
+my $name = $env->{NAME};
+# my $safe_name = $env->{SAFE_NAME};
+my $apex = $env->{APEX};
+my $port = $env->{PORT};
+my $www = defined $env->{WWW} ? ($env->{WWW}+0) : 1; # default: add the `www.$apex` server
+my $cmd = $env->{CMD};
 
 ## --------------------------------------------------------------------------------------------------------------------
 # Packages
@@ -135,8 +149,8 @@ if ( $is_node ) {
     sep();
     title("Installing NPM Packages");
     run('npm ci');
-    # run('npm run build');
-    # run('npm ci --production');
+    run('npm run build');
+    run('npm ci --production');
 }
 if ( $is_golang ) {
     sep();
@@ -200,7 +214,7 @@ sep();
 title("Creating Dirs");
 
 if ( -f "deployer/dirs" ) {
-    my @dirs = read_file('deployer/dirs');
+    my @dirs = read_file_and_sub_env('deployer/dirs');
     chomp @dirs;
     for my $line ( @dirs ) {
         run("sudo mkdir -p $line");
@@ -218,7 +232,16 @@ sep();
 title("Cron");
 
 if ( -f "deployer/cron.d" ) {
-    run("sudo cp deployer/cron.d /etc/cron.d/$safe_name");
+    my @cron = read_file_and_sub_env('deployer/cron.d');
+
+    my $cron_fh = File::Temp->new();
+    my $cron_filename = $cron_fh->filename;
+
+    msg("Writing $cron_filename");
+    msg(@cron);
+    write_file($cron_fh, @cron);
+
+    run("sudo cp $cron_filename /etc/cron.d/$safe_name");
 }
 else {
     msg("No cron.d file found");
@@ -500,6 +523,28 @@ sep();
 title("Complete!");
 
 ## --------------------------------------------------------------------------------------------------------------------
+
+sub read_file_and_sub_env {
+    my ($filename) = @_;
+
+    my @lines = read_file($filename);
+
+    print "---\n";
+    print @lines, "\n";
+    print "---\n";
+
+    foreach my $line (@lines) {
+        foreach my $key (keys %{$env}) {
+            $line =~ s/\$$key/$env->{$key}/g;
+        }
+    }
+
+    print "---\n";
+    print @lines, "\n";
+    print "---\n";
+
+    return @lines;
+}
 
 sub title {
     my ($msg) = @_;

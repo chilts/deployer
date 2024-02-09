@@ -3,6 +3,9 @@ all:
 
 deploy:
 	scp deployer.pl deployer-pg-dump.sh xenon.chilts.org:~/bin
+	scp deployer.pl deployer-pg-dump.sh rodia.chilts.me:~/bin
+	scp deployer.pl deployer-pg-dump.sh kamino.chilts.me:~/bin
+	scp deployer.pl deployer-pg-dump.sh ilum.chilts.me:~/bin
 #	scp deployer.pl speedball.chilts.org:~/bin  # dead
 #	scp deployer.pl salty.webdev.sh:~/bin       # dead
 #	scp deployer.pl zool.webdev.sh:~/bin        # dead
