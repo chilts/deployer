@@ -177,8 +177,8 @@ if ( -f "deployer/dirs" ) {
     my @dirs = read_file_and_sub_env('deployer/dirs');
     chomp @dirs;
     for my $line ( @dirs ) {
-        run("sudo mkdir -p $line");
-        run("sudo chown $username.$username $line");
+        run("sudo mkdir -p '$line'");
+        run("sudo chown $username.$username '$line'");
     }
 }
 else {
@@ -201,7 +201,7 @@ if ( -f "deployer/cron.d" ) {
     msg(@cron);
     write_file($cron_fh, @cron);
 
-    run("sudo cp $cron_filename /etc/cron.d/$safe_name");
+    run("sudo cp $cron_filename '/etc/cron.d/$safe_name'");
 }
 else {
     msg("No cron.d file found");
@@ -215,7 +215,7 @@ title("Supervisor");
 
 if ( -f "deployer/supervisor" ) {
     # for supervisord logging
-    run("sudo mkdir -p /var/log/$name/");
+    run("sudo mkdir -p '/var/log/$name/'");
 
     # create each line of the supervisor file
     my @supervisor;
@@ -254,7 +254,6 @@ if ( -f "deployer/supervisor" ) {
     run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
 
     run("sudo supervisorctl restart $safe_name");
-
 }
 else {
     msg("No supervisor file found");
@@ -270,17 +269,17 @@ if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pe
     msg("It looks like you have all files of an Origin Certificate from Cloudflare.");
     msg("");
     msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
-    run("sudo cp deployer/apex.pem /etc/ssl/$apex.pem");
+    run("sudo cp deployer/apex.pem '/etc/ssl/$apex.pem'");
     msg("");
     msg("Decrypting 'apex.key.age' to 'apex.key");
     run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
     msg("");
     msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");
-    run("sudo cp deployer/apex.key /etc/ssl/private/$apex.key");
+    run("sudo cp deployer/apex.key '/etc/ssl/private/$apex.key'");
     msg("");
     msg("Fixing ownership and permissions on '/etc/ssl/private/$apex.key");
-    run("sudo chown root.ssl-cert /etc/ssl/private/$apex.key");
-    run("sudo chmod 640 /etc/ssl/private/$apex.key");
+    run("sudo chown root.ssl-cert '/etc/ssl/private/$apex.key'");
+    run("sudo chmod 640 '/etc/ssl/private/$apex.key'");
     msg("");
     msg("Removing 'apex.key'");
     run("rm deployer/apex.key");
@@ -341,11 +340,11 @@ if ( $is_nginx_certbot ) {
         msg(@nginx);
         write_file($nginx_fh, @nginx);
 
-        run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
+        run("sudo cp $nginx_filename '/etc/nginx/sites-available/$apex.conf'");
 
         # only do the symlink if it doesn't already exist
         if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
-            run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+            run("sudo ln -s '/etc/nginx/sites-available/$apex.conf' '/etc/nginx/sites-enabled/$apex.conf'");
         }
 
         run("sudo service nginx restart");
@@ -426,12 +425,12 @@ elsif ( $is_nginx_origin_cert ) {
     msg(@nginx);
     write_file($nginx_fh, @nginx);
 
-    run("sudo cp $nginx_filename /etc/nginx/sites-available/$apex.conf");
-    run("sudo chmod 644 /etc/nginx/sites-available/$apex.conf");
+    run("sudo cp $nginx_filename '/etc/nginx/sites-available/$apex.conf'");
+    run("sudo chmod 644 '/etc/nginx/sites-available/$apex.conf'");
 
     # only do the symlink if it doesn't already exist
     if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
-        run("sudo ln -s /etc/nginx/sites-available/$apex.conf /etc/nginx/sites-enabled/$apex.conf");
+        run("sudo ln -s '/etc/nginx/sites-available/$apex.conf' '/etc/nginx/sites-enabled/$apex.conf'");
     }
 
     run("sudo service nginx restart");
