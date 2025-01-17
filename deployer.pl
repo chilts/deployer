@@ -317,6 +317,7 @@ if ( $is_nginx_certbot ) {
         push(@nginx, "        proxy_set_header   Host                \$http_host;\n");
         push(@nginx, "        proxy_pass         http://localhost:$port;\n");
         push(@nginx, "    }\n");
+        push(@nginx, "    client_max_body_size 25M;\n");
         push(@nginx, "    access_log /var/log/nginx/$apex.access.log;\n");
         push(@nginx, "    error_log /var/log/nginx/$apex.error.log;\n");
         push(@nginx, "}\n");
