@@ -99,8 +99,7 @@ for my $required ( @requireds ) {
     }
 }
 
-my $name = $env->{NAME};
-# my $safe_name = $env->{SAFE_NAME};
+# $name (and $safe_name) comes from the current dir (not an env var) and a derivative
 my $apex = $env->{APEX};
 my $port = $env->{PORT};
 my $www = defined $env->{WWW} ? ($env->{WWW}+0) : 1; # default: add the `www.$apex` server
