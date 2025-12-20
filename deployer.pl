@@ -92,6 +92,13 @@ my @requireds = (
     'WWW',
     'CMD',
 );
+
+# if pg-dump is enabled, require these additional env vars
+if ( -f "deployer/pg-dump" ) {
+    push(@requireds, 'DATABASE_URL');
+    push(@requireds, 'DEPLOYER_BACKUP_DIR');
+}
+
 for my $required ( @requireds ) {
     unless ( exists $env->{$required} && length($env->{$required}) ) {
         print STDERR "Env var '$required' is required\n";
@@ -460,6 +467,44 @@ if ( -f "deployer/certbot" ) {
 }
 else {
     msg("CertBot has not been requested for this install.");
+}
+
+## --------------------------------------------------------------------------------------------------------------------
+# Pg Dump
+
+sep();
+title("Pg Dump");
+
+if ( -f "deployer/pg-dump" ) {
+    my $backup_dir = $env->{DEPLOYER_BACKUP_DIR};
+    my $database_url = $env->{DATABASE_URL};
+    my $dump_dir = "$backup_dir/database/$name";
+
+    # Ensure dump directory exists
+    run("sudo mkdir -p '$dump_dir'");
+    run("sudo chown $username.$username '$dump_dir'");
+
+    my @cron;
+    push(@cron, "#  hr  mn  dom mon dow\n");
+    push(@cron, "    0   1    *   *   *   $username   /home/$username/bin/deployer-pg-dump.sh $dump_dir $database_url\n");
+
+    my $cron_fh = File::Temp->new();
+    my $cron_filename = $cron_fh->filename;
+
+    msg("Writing $cron_filename");
+    msg(@cron);
+    write_file($cron_fh, @cron);
+
+    run("sudo cp $cron_filename '/etc/cron.d/$safe_name-pg-dump'");
+}
+else {
+    msg("No pg-dump file found");
+
+    # remove the cron file if it exists (feature was previously enabled but now disabled)
+    if ( -f "/etc/cron.d/$safe_name-pg-dump" ) {
+        msg("Removing old pg-dump cron file");
+        run("sudo rm '/etc/cron.d/$safe_name-pg-dump'");
+    }
 }
 
 ## --------------------------------------------------------------------------------------------------------------------

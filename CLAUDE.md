@@ -55,6 +55,22 @@ For Cloudflare Origin Certificates, the project needs:
 
 The script uses `age` for encryption/decryption of SSL keys.
 
+### PostgreSQL Database Backups
+
+To enable automatic daily database backups, create an empty `deployer/pg-dump` file:
+```bash
+touch deployer/pg-dump
+```
+
+When this file exists, these additional environment variables are required in `deployer/env`:
+- `DATABASE_URL` - PostgreSQL connection string (e.g., `postgres://user@localhost/dbname`)
+- `DEPLOYER_BACKUP_DIR` - Base directory for backups (e.g., `/home/chilts/Data/Backup`)
+
+The deployer will:
+1. Create the backup directory at `$DEPLOYER_BACKUP_DIR/database/$NAME`
+2. Install a cron job at `/etc/cron.d/$SAFE_NAME-pg-dump` that runs daily at 1am
+3. Use `deployer-pg-dump.sh` to perform the backup
+
 ### Helper Script
 
 `deployer-pg-dump.sh` provides PostgreSQL database backups:

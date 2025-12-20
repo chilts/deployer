@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git restore:*)",
+      "Bash(cat:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
