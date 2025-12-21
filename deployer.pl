@@ -221,7 +221,7 @@ title("Supervisor");
 
 if ( -f "deployer/supervisor" ) {
     # for supervisord logging
-    run("sudo mkdir -p '/var/log/$name/'");
+    run("sudo mkdir -p '/var/log/supervisor/$name/'");
 
     # create each line of the supervisor file
     my @supervisor;

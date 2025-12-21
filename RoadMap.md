@@ -10,7 +10,7 @@
 
 ### High
 
-- [ ] **Supervisor log directory mismatch** - The log directory creation creates `/var/log/$name/` but the supervisor config references `/var/log/supervisor/$name/`. Supervisor logs may fail to write.
+- [x] **Supervisor log directory mismatch** - The log directory creation creates `/var/log/$name/` but the supervisor config references `/var/log/supervisor/$name/`. Supervisor logs may fail to write.
 
 - [ ] **Command injection via APEX variable** - The `$apex` variable from `deployer/env` is interpolated into shell commands in the SSL and nginx blocks without shell quoting. A malicious APEX value could execute arbitrary commands.
 
