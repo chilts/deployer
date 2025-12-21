@@ -306,9 +306,12 @@ title("Nginx");
 # Firstly we need to figure out if we are doing an Origin Cert (from Cloudflare)
 # using CertBot (the default).
 
+my $nginx_conf_available = "/etc/nginx/sites-available/$apex.conf";
+my $nginx_conf_enabled = "/etc/nginx/sites-enabled/$apex.conf";
+
 if ( $is_nginx_certbot ) {
     # Skip if the Nginx config already exists.
-    if ( ! -f "/etc/nginx/sites-available/$name.conf" ) {
+    if ( ! -f $nginx_conf_available ) {
         my @nginx;
         push(@nginx, "server {\n");
         push(@nginx, "    listen      80;\n");
@@ -347,11 +350,11 @@ if ( $is_nginx_certbot ) {
         msg(@nginx);
         write_file($nginx_fh, @nginx);
 
-        run("sudo cp $nginx_filename '/etc/nginx/sites-available/$apex.conf'");
+        run("sudo cp $nginx_filename '$nginx_conf_available'");
 
         # only do the symlink if it doesn't already exist
-        if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
-            run("sudo ln -s '/etc/nginx/sites-available/$apex.conf' '/etc/nginx/sites-enabled/$apex.conf'");
+        if ( ! -l $nginx_conf_enabled ) {
+            run("sudo ln -s '$nginx_conf_available' '$nginx_conf_enabled'");
         }
 
         run("sudo service nginx restart");
@@ -432,12 +435,12 @@ elsif ( $is_nginx_origin_cert ) {
     msg(@nginx);
     write_file($nginx_fh, @nginx);
 
-    run("sudo cp $nginx_filename '/etc/nginx/sites-available/$apex.conf'");
-    run("sudo chmod 644 '/etc/nginx/sites-available/$apex.conf'");
+    run("sudo cp $nginx_filename '$nginx_conf_available'");
+    run("sudo chmod 644 '$nginx_conf_available'");
 
     # only do the symlink if it doesn't already exist
-    if ( ! -l "/etc/nginx/sites-enabled/$apex.conf" ) {
-        run("sudo ln -s '/etc/nginx/sites-available/$apex.conf' '/etc/nginx/sites-enabled/$apex.conf'");
+    if ( ! -l $nginx_conf_enabled ) {
+        run("sudo ln -s '$nginx_conf_available' '$nginx_conf_enabled'");
     }
 
     run("sudo service nginx restart");

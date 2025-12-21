@@ -4,7 +4,7 @@
 
 ### Critical
 
-- [ ] **Nginx config naming mismatch** - In the nginx config generation block (CertBot path), the existence check looks for `$name.conf` but the config is saved as `$apex.conf`. This causes the check to always fail if directory name differs from apex domain.
+- [x] **Nginx config naming mismatch** - In the nginx config generation block (CertBot path), the existence check looks for `$name.conf` but the config is saved as `$apex.conf`. This causes the check to always fail if directory name differs from apex domain.
 
 - [ ] **PNG/JPG minification variable interpolation** - In the minify block, the curl commands use `\@filename.png` instead of `\@$filename.png`, causing the variable to not be interpolated. Minification of images will fail silently.
 
