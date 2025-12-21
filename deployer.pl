@@ -495,15 +495,15 @@ if ( -f "deployer/pg-dump" ) {
     msg(@cron);
     write_file($cron_fh, @cron);
 
-    run("sudo cp $cron_filename '/etc/cron.d/$safe_name-pg-dump'");
+    run("sudo cp $cron_filename '/etc/cron.d/deployer-pg-dump--$safe_name'");
 }
 else {
     msg("No pg-dump file found");
 
     # remove the cron file if it exists (feature was previously enabled but now disabled)
-    if ( -f "/etc/cron.d/$safe_name-pg-dump" ) {
+    if ( -f "/etc/cron.d/deployer-pg-dump--$safe_name" ) {
         msg("Removing old pg-dump cron file");
-        run("sudo rm '/etc/cron.d/$safe_name-pg-dump'");
+        run("sudo rm '/etc/cron.d/deployer-pg-dump--$safe_name'");
     }
 }
 

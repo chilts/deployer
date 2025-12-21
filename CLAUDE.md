@@ -68,7 +68,7 @@ When this file exists, these additional environment variables are required in `d
 
 The deployer will:
 1. Create the backup directory at `$DEPLOYER_BACKUP_DIR/database/$NAME`
-2. Install a cron job at `/etc/cron.d/$SAFE_NAME-pg-dump` that runs daily at 1am
+2. Install a cron job at `/etc/cron.d/deployer-pg-dump--$SAFE_NAME` that runs daily at 1am
 3. Use `deployer-pg-dump.sh` to perform the backup
 
 ### Helper Script
