@@ -112,6 +112,15 @@ my $port = $env->{PORT};
 my $www = defined $env->{WWW} ? ($env->{WWW}+0) : 1; # default: add the `www.$apex` server
 my $cmd = $env->{CMD};
 
+# Validate APEX to prevent command injection - only allow valid domain name characters
+if ( $apex !~ /^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$/ || $apex =~ /\.\./ ) {
+    print STDERR "Error: APEX '$apex' contains invalid characters. Only alphanumeric, hyphens, and dots allowed.\n";
+    exit 2;
+}
+
+# Shell-escape apex for use in shell commands (defense in depth)
+my $apex_escaped = quotemeta($apex);
+
 ## --------------------------------------------------------------------------------------------------------------------
 # Packages
 
@@ -275,17 +284,17 @@ if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pe
     msg("It looks like you have all files of an Origin Certificate from Cloudflare.");
     msg("");
     msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
-    run("sudo cp deployer/apex.pem '/etc/ssl/$apex.pem'");
+    run("sudo cp deployer/apex.pem '/etc/ssl/$apex_escaped.pem'");
     msg("");
     msg("Decrypting 'apex.key.age' to 'apex.key");
     run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
     msg("");
     msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");
-    run("sudo cp deployer/apex.key '/etc/ssl/private/$apex.key'");
+    run("sudo cp deployer/apex.key '/etc/ssl/private/$apex_escaped.key'");
     msg("");
     msg("Fixing ownership and permissions on '/etc/ssl/private/$apex.key");
-    run("sudo chown root.ssl-cert '/etc/ssl/private/$apex.key'");
-    run("sudo chmod 640 '/etc/ssl/private/$apex.key'");
+    run("sudo chown root.ssl-cert '/etc/ssl/private/$apex_escaped.key'");
+    run("sudo chmod 640 '/etc/ssl/private/$apex_escaped.key'");
     msg("");
     msg("Removing 'apex.key'");
     run("rm deployer/apex.key");
@@ -306,8 +315,8 @@ title("Nginx");
 # Firstly we need to figure out if we are doing an Origin Cert (from Cloudflare)
 # using CertBot (the default).
 
-my $nginx_conf_available = "/etc/nginx/sites-available/$apex.conf";
-my $nginx_conf_enabled = "/etc/nginx/sites-enabled/$apex.conf";
+my $nginx_conf_available = "/etc/nginx/sites-available/$apex_escaped.conf";
+my $nginx_conf_enabled = "/etc/nginx/sites-enabled/$apex_escaped.conf";
 
 if ( $is_nginx_certbot ) {
     # Skip if the Nginx config already exists.
