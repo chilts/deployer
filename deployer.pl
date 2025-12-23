@@ -109,7 +109,18 @@ for my $required ( @requireds ) {
 # $name (and $safe_name) comes from the current dir (not an env var) and a derivative
 my $apex = $env->{APEX};
 my $port = $env->{PORT};
-my $www = defined $env->{WWW} ? ($env->{WWW}+0) : 1; # default: add the `www.$apex` server
+my $www = 1; # default: add the `www.$apex` server
+if (defined $env->{WWW}) {
+    my $www_val = lc($env->{WWW});
+    if ($www_val =~ /^(1|yes|true|on)$/) {
+        $www = 1;
+    } elsif ($www_val =~ /^(0|no|false|off)$/) {
+        $www = 0;
+    } else {
+        print STDERR "Error: WWW must be a boolean value (0, 1, yes, no, true, false, on, off)\n";
+        exit 2;
+    }
+}
 my $cmd = $env->{CMD};
 
 # Validate APEX to prevent command injection - only allow valid domain name characters
