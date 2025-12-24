@@ -121,6 +121,12 @@ if (defined $env->{WWW}) {
         exit 2;
     }
 }
+# Validate PORT is numeric and in valid range
+if ( $port !~ /^\d+$/ || $port < 1 || $port > 65535 ) {
+    print STDERR "Error: PORT must be a numeric value between 1 and 65535, got '$port'\n";
+    exit 2;
+}
+
 my $cmd = $env->{CMD};
 
 # Validate APEX to prevent command injection - only allow valid domain name characters

@@ -20,7 +20,7 @@
 
 - [x] **WWW variable coercion** - Using `($env->{WWW}+0)` for boolean coercion means strings like "yes" or "true" coerce to 0 instead of 1, unexpectedly disabling www redirect.
 
-- [ ] **Port validation missing** - The PORT environment variable is never validated as numeric. Non-numeric values will cause nginx config syntax errors.
+- [x] **Port validation missing** - The PORT environment variable is never validated as numeric. Non-numeric values will cause nginx config syntax errors.
 
 - [ ] **safe_name incomplete sanitization** - The safe_name regex only converts dots to dashes. Other problematic characters (spaces, quotes, slashes) are not sanitized and could break cron/supervisor filenames.
 
@@ -68,7 +68,7 @@
 
 - [ ] **Validate required variables early** - Validate APEX/PORT/WWW/CMD format before proceeding with deployment.
 
-- [ ] **PORT validation** - Ensure PORT is numeric and in valid range (1-65535).
+- [x] **PORT validation** - Ensure PORT is numeric and in valid range (1-65535).
 
 - [x] **WWW validation** - Ensure WWW is explicitly 0 or 1, reject other values.
 
