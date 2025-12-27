@@ -14,7 +14,7 @@
 
 - [x] **Command injection via APEX variable** - The `$apex` variable from `deployer/env` is interpolated into shell commands in the SSL and nginx blocks without shell quoting. A malicious APEX value could execute arbitrary commands.
 
-- [ ] **Command injection via minify filenames** - Filenames from `deployer/minify` are passed to curl commands unquoted. Filenames with shell metacharacters could execute arbitrary commands.
+- [x] **Command injection via minify filenames** - Filenames from `deployer/minify` are passed to curl commands unquoted. Filenames with shell metacharacters could execute arbitrary commands.
 
 ### Medium
 
