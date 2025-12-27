@@ -6,7 +6,7 @@
 
 - [x] **Nginx config naming mismatch** - In the nginx config generation block (CertBot path), the existence check looks for `$name.conf` but the config is saved as `$apex.conf`. This causes the check to always fail if directory name differs from apex domain.
 
-- [ ] **PNG/JPG minification variable interpolation** - In the minify block, the curl commands use `\@filename.png` instead of `\@$filename.png`, causing the variable to not be interpolated. Minification of images will fail silently.
+- [x] **PNG/JPG minification variable interpolation** - In the minify block, the curl commands use `\@filename.png` instead of `\@$filename.png`, causing the variable to not be interpolated. Minification of images will fail silently.
 
 ### High
 
@@ -14,7 +14,7 @@
 
 - [x] **Command injection via APEX variable** - The `$apex` variable from `deployer/env` is interpolated into shell commands in the SSL and nginx blocks without shell quoting. A malicious APEX value could execute arbitrary commands.
 
-- [ ] **Command injection via minify filenames** - Filenames from `deployer/minify` are passed to curl commands unquoted. Filenames with shell metacharacters could execute arbitrary commands.
+- [x] **Command injection via minify filenames** - Filenames from `deployer/minify` are passed to curl commands unquoted. Filenames with shell metacharacters could execute arbitrary commands.
 
 ### Medium
 

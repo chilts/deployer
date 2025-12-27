@@ -177,21 +177,28 @@ if ( -f "deployer/minify" ) {
     chomp @minifies;
     for my $minify ( @minifies ) {
         my ($type, $filename) = split(':', $minify);
+
+        # Validate filename to prevent command injection - only allow safe path characters
+        if ( $filename !~ /^[a-zA-Z0-9_\-\.\/]+$/ || $filename =~ /\.\./ ) {
+            print STDERR "Error: Filename '$filename' contains invalid characters. Only alphanumeric, underscores, dashes, dots, and slashes allowed (no '..').\n";
+            exit 2;
+        }
+
         if ( $type eq 'css' ) {
             msg("Minifying CSS : $filename.css");
-            run("curl -X POST -s --data-urlencode 'input\@$filename.css' https://cssminifier.com/raw > $filename.min.css");
+            run("curl -X POST -s --data-urlencode 'input\@$filename.css' https://cssminifier.com/raw > '$filename.min.css'");
         }
         if ( $type eq 'js' ) {
             msg("Minifying JavaScript : $filename.js");
-            run("curl -X POST -s --data-urlencode 'input\@$filename.js' https://javascript-minifier.com/raw > $filename.min.js");
+            run("curl -X POST -s --data-urlencode 'input\@$filename.js' https://javascript-minifier.com/raw > '$filename.min.js'");
         }
         if ( $type eq 'png' ) {
             msg("Crushing PNG : $filename.png");
-            run("curl -X POST -s --form 'input=\@filename.png;type=image/png' https://pngcrush.com/crush > $filename.min.png");
+            run("curl -X POST -s --form 'input=\@$filename.png;type=image/png' https://pngcrush.com/crush > '$filename.min.png'");
         }
         if ( $type eq 'jpg' ) {
             msg("Optimising JPG : $filename.jpg");
-            run("curl -X POST -s --form 'input=\@filename.jpg;type=image/jpg' https://jpgoptimiser.com/optimise > $filename.min.jpg");
+            run("curl -X POST -s --form 'input=\@$filename.jpg;type=image/jpg' https://jpgoptimiser.com/optimise > '$filename.min.jpg'");
         }
     }
 }
