@@ -37,7 +37,9 @@ my $username = $ENV{USER};
 my $dir = Cwd::cwd();
 my ($name) = File::Basename::fileparse($dir);
 my $safe_name = $name;
-$safe_name =~ s/\./-/g;
+$safe_name =~ s/[^a-zA-Z0-9_-]/-/g;  # Replace any non-alphanumeric (except - and _) with dash
+$safe_name =~ s/-+/-/g;              # Collapse multiple dashes into one
+$safe_name =~ s/^-|-$//g;            # Remove leading/trailing dashes
 
 print "name = $name\n";
 print "safe_name = $safe_name\n";

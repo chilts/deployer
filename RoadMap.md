@@ -22,7 +22,7 @@
 
 - [x] **Port validation missing** - The PORT environment variable is never validated as numeric. Non-numeric values will cause nginx config syntax errors.
 
-- [ ] **safe_name incomplete sanitization** - The safe_name regex only converts dots to dashes. Other problematic characters (spaces, quotes, slashes) are not sanitized and could break cron/supervisor filenames.
+- [x] **safe_name incomplete sanitization** - The safe_name regex only converts dots to dashes. Other problematic characters (spaces, quotes, slashes) are not sanitized and could break cron/supervisor filenames.
 
 ---
 
