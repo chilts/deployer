@@ -175,7 +175,7 @@
 
 ### Static Files
 
-- [ ] **Static file serving** - Generate nginx location blocks for static files with caching headers.
+- [x] **Static file serving** - Generate nginx location blocks for static files with caching headers.
 
 - [ ] **Asset versioning** - Support content-hash based asset filenames for cache busting.
 

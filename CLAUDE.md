@@ -36,7 +36,7 @@ The deployer is a single Perl script that runs in a target project directory and
 7. Setup cron from `deployer/cron.d`
 8. Create supervisor config from `deployer/supervisor`
 9. Handle SSL: Cloudflare Origin Cert (if `apex.pem`, `apex.key.age`, `key.age` exist) or CertBot
-10. Generate nginx config and restart
+10. Generate nginx config and restart (if `deployer/nginx` exists)
 
 ### Required Environment Variables
 
@@ -70,6 +70,31 @@ The deployer will:
 1. Create the backup directory at `$DEPLOYER_BACKUP_DIR/database/$NAME`
 2. Install a cron job at `/etc/cron.d/deployer-pg-dump--$SAFE_NAME` that runs daily at 1am
 3. Use `deployer-pg-dump.sh` to perform the backup
+
+### Nginx Configuration
+
+To enable nginx configuration, create an empty `deployer/nginx` file:
+```bash
+touch deployer/nginx
+```
+
+The deployer will generate an nginx config at `/etc/nginx/sites-available/$APEX.conf` and symlink it to sites-enabled. The config type depends on SSL setup:
+- **CertBot mode** (default): HTTP server with proxy to app
+- **Origin Cert mode**: HTTPS server with HTTP redirect
+
+### Static File Serving
+
+When `deployer/nginx` exists, you can also enable static file serving. Create a `deployer/nginx-static` file containing the directory name:
+
+```bash
+echo "static" > deployer/nginx-static
+```
+
+This configures nginx to:
+1. Try serving files from `./static/` at the root URL (e.g., `static/favicon.ico` → `/favicon.ico`)
+2. Fall back to proxying to the app if no static file exists
+3. Add caching headers (7 day expiry, Cache-Control: public, immutable)
+4. Enable gzip compression for text-based assets
 
 ### Helper Script
 
