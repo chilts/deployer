@@ -32,7 +32,7 @@
 
 - [ ] **Environment variables logged to stdout** - In the env loading section, all environment variables including secrets (DATABASE_URL, API keys) are printed with `msg(" - $k=$v")`. These appear in terminal history and logs.
 
-- [ ] **DATABASE_URL in world-readable cron file** - The pg-dump cron job contains the full DATABASE_URL in `/etc/cron.d/deployer-pg-dump--*` which is world-readable by default (644 permissions).
+- [x] **DATABASE_URL in world-readable cron file** - The pg-dump cron job contains the full DATABASE_URL in `/etc/cron.d/deployer-pg-dump--*` which is world-readable by default (644 permissions).
 
 - [ ] **Secrets in world-readable supervisor config** - All environment variables including secrets are written to `/etc/supervisor/conf.d/$name.conf` with default world-readable permissions.
 

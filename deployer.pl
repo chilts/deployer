@@ -534,6 +534,7 @@ if ( -f "deployer/pg-dump" ) {
     write_file($cron_fh, @cron);
 
     run("sudo cp $cron_filename '/etc/cron.d/deployer-pg-dump--$safe_name'");
+    run("sudo chmod 640 '/etc/cron.d/deployer-pg-dump--$safe_name'");
 }
 else {
     msg("No pg-dump file found");
