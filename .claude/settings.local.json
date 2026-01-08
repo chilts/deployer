@@ -5,10 +5,8 @@
   },
   "permissions": {
     "allow": [
-      "Bash(git restore:*)",
+      "Bash(git:*)",
       "Bash(cat:*)",
-      "Bash(git commit:*)",
-      "Bash(git mv:*)",
       "Bash(perl -c:*)"
     ]
   }

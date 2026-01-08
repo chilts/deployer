@@ -86,7 +86,7 @@
 
 - [ ] **Verify nginx reload** - Check that `systemctl reload nginx` succeeds before continuing.
 
-- [ ] **Configurable client_max_body_size** - Allow setting from deployer/env instead of hardcoded 25M.
+- [x] **Configurable client_max_body_size** - Allow setting from deployer/env instead of hardcoded 25M.
 
 - [ ] **WebSocket support** - Add proper proxy headers for WebSocket connections (Upgrade, Connection headers).
 

@@ -46,6 +46,10 @@ Projects must define in `deployer/env`:
 - `WWW` - whether to add www redirect (0 or 1)
 - `CMD` - command to run the application
 
+### Optional Environment Variables
+
+- `NGINX_CLIENT_MAX_BODY_SIZE` - nginx client_max_body_size (default: 25M, e.g., 10M, 100K, 1G)
+
 ### SSL Certificate Handling
 
 For Cloudflare Origin Certificates, the project needs:

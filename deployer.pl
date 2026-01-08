@@ -129,6 +129,15 @@ if ( $port !~ /^\d+$/ || $port < 1 || $port > 65535 ) {
     exit 2;
 }
 
+# Set default for NGINX_CLIENT_MAX_BODY_SIZE
+$env->{NGINX_CLIENT_MAX_BODY_SIZE} //= '25M';
+
+# Validate NGINX_CLIENT_MAX_BODY_SIZE format
+unless ($env->{NGINX_CLIENT_MAX_BODY_SIZE} =~ /^\d+[KMG]?$/i) {
+    print STDERR "Error: NGINX_CLIENT_MAX_BODY_SIZE must be a number optionally followed by K, M, or G (e.g., 25M, 100K, 1G)\n";
+    exit 2;
+}
+
 my $cmd = $env->{CMD};
 
 # Validate APEX to prevent command injection - only allow valid domain name characters
@@ -369,7 +378,7 @@ if ( -f "deployer/nginx" ) {
             push(@nginx, "    listen      80;\n");
             push(@nginx, "    server_name $apex;\n");
             push(@nginx, get_location_blocks($static_dir, $dir, $port));
-            push(@nginx, "    client_max_body_size 25M;\n");
+            push(@nginx, "    client_max_body_size $env->{NGINX_CLIENT_MAX_BODY_SIZE};\n");
             push(@nginx, "    access_log /var/log/nginx/$apex.access.log;\n");
             push(@nginx, "    error_log /var/log/nginx/$apex.error.log;\n");
             push(@nginx, "}\n");
@@ -425,6 +434,7 @@ if ( -f "deployer/nginx" ) {
         push(@nginx, "    ssl_certificate     /etc/ssl/$apex.pem;\n");
         push(@nginx, "    ssl_certificate_key /etc/ssl/private/$apex.key;\n");
         push(@nginx, get_location_blocks($static_dir, $dir, $port));
+        push(@nginx, "    client_max_body_size $env->{NGINX_CLIENT_MAX_BODY_SIZE};\n");
         push(@nginx, "    access_log          /var/log/nginx/$apex.access.log;\n");
         push(@nginx, "    error_log           /var/log/nginx/$apex.error.log;\n");
         push(@nginx, "}\n");
