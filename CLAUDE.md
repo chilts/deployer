@@ -75,6 +75,21 @@ The deployer will:
 2. Install a cron job at `/etc/cron.d/deployer-pg-dump--$SAFE_NAME` that runs daily at 1am
 3. Use `deployer-pg-dump.sh` to perform the backup
 
+### Supervisor Graceful Shutdown
+
+The deployer configures supervisor for graceful shutdown:
+- `stopsignal = TERM` - Sends SIGTERM to stop process
+- `stopwaitsecs = 30` - Waits 30 seconds before SIGKILL
+- `startsecs = 5` - Process must run 5 seconds to be "started"
+
+Applications should handle SIGTERM to finish in-flight requests:
+```javascript
+// Node.js example
+process.on('SIGTERM', () => {
+  server.close(() => process.exit(0));
+});
+```
+
 ### Nginx Configuration
 
 To enable nginx configuration, create an empty `deployer/nginx` file:

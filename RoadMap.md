@@ -169,7 +169,7 @@
 
 - [ ] **Systemd support** - Alternative to supervisor using systemd service files.
 
-- [ ] **Zero-downtime restart** - Use supervisor's `restart` with proper signal handling for graceful shutdown.
+- [x] **Zero-downtime restart** - Use supervisor's `restart` with proper signal handling for graceful shutdown.
 
 - [ ] **Multiple service support** - Support multiple supervisor programs from `deployer/supervisor.d/` directory.
 

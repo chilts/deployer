@@ -285,6 +285,11 @@ if ( -f "deployer/supervisor" ) {
     push(@supervisor, "stderr_logfile_maxbytes = 50MB\n");
     push(@supervisor, "stderr_logfile_backups = 20\n");
 
+    # Graceful shutdown settings
+    push(@supervisor, "stopsignal = TERM\n");
+    push(@supervisor, "stopwaitsecs = 30\n");
+    push(@supervisor, "startsecs = 5\n");
+
     # environment
     push(@supervisor, "environment = NODE_ENV=\"production\"");
     # copy all ENV VARS over
