@@ -326,7 +326,7 @@ if ( -f "deployer/key.age" && -f "deployer/apex.key.age" && -f "deployer/apex.pe
     msg("Copying 'apex.pem' to '/etc/ssl/$apex.pem'");
     run("sudo cp deployer/apex.pem '/etc/ssl/$apex_escaped.pem'");
     msg("");
-    msg("Decrypting 'apex.key.age' to 'apex.key");
+    msg("Decrypting 'apex.key.age' to 'apex.key' (passphrase required)...");
     run("age --decrypt --identity=deployer/key.age --output=deployer/apex.key deployer/apex.key.age");
     msg("");
     msg("Copying 'apex.key' to '/etc/ssl/private/$apex.key");

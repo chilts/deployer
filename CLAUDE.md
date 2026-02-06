@@ -53,11 +53,11 @@ Projects must define in `deployer/env`:
 ### SSL Certificate Handling
 
 For Cloudflare Origin Certificates, the project needs:
-- `deployer/key.age` - age-encrypted private key
-- `deployer/apex.key.age` - encrypted SSL private key
-- `deployer/apex.pem` - SSL certificate
+- `deployer/key.age` - passphrase-protected age identity
+- `deployer/apex.key.age` - SSL private key encrypted with the age identity
+- `deployer/apex.pem` - SSL certificate (public)
 
-The script uses `age` for encryption/decryption of SSL keys.
+Use `deployer-origin-cert-setup.sh` to create these files interactively. During deployment, the user will be prompted for the passphrase to decrypt the age identity.
 
 ### PostgreSQL Database Backups
 
@@ -115,7 +115,19 @@ This configures nginx to:
 3. Add caching headers (7 day expiry, Cache-Control: public, immutable)
 4. Enable gzip compression for text-based assets
 
-### Helper Script
+### Helper Scripts
+
+`deployer-origin-cert-setup.sh` sets up Cloudflare Origin Certificate files:
+```bash
+~/bin/deployer-origin-cert-setup.sh
+```
+Run from within a webapp directory. It generates the age identity, prompts for the certificate and private key, and creates the encrypted files.
+
+`deployer-origin-cert-check.sh` validates the origin certificate files can be decrypted:
+```bash
+~/bin/deployer-origin-cert-check.sh
+```
+Run from within a webapp directory to verify the passphrase works and files are valid.
 
 `deployer-pg-dump.sh` provides PostgreSQL database backups:
 ```bash

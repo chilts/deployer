@@ -65,4 +65,82 @@ DATA_DIR: ?
 GOOGLE_ANALYTICS: ?
 ```
 
+## Cloudflare Origin Certificate
+
+To enable full SSL encryption between your origin server and Cloudflare's CDN, you can use a Cloudflare Origin Certificate instead of CertBot.
+
+### Required Files
+
+Create these three files in your webapp's `deployer/` directory:
+
+1. **`deployer/apex.pem`** - The Origin Certificate (public certificate) from Cloudflare
+2. **`deployer/apex.key.age`** - The private key, encrypted with [age](https://github.com/FiloSottile/age)
+3. **`deployer/key.age`** - Your age identity file used to decrypt the private key
+
+Also ensure `deployer/nginx` exists to enable nginx configuration.
+
+### Setup Steps
+
+The easiest way is to use the setup script:
+
+```bash
+~/bin/deployer-origin-cert-setup.sh
+```
+
+This will:
+1. Generate an age identity and encrypt it with a passphrase
+2. Prompt you to paste the Origin Certificate
+3. Prompt you to paste the private key (encrypted automatically)
+4. Create `deployer/nginx` if needed
+
+#### Manual Setup
+
+If you prefer to set things up manually:
+
+1. **Get the Origin Certificate from Cloudflare**:
+   - Go to Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate
+   - Choose your hostnames (e.g., `example.com` and `*.example.com`)
+   - Select validity period (up to 15 years)
+   - Save the certificate as `deployer/apex.pem`
+   - Save the private key to a temporary file
+
+2. **Create an age identity**:
+   ```bash
+   age-keygen -o /tmp/identity.age
+   ```
+
+3. **Encrypt the identity with a passphrase**:
+   ```bash
+   age --encrypt --passphrase --armor -o deployer/key.age /tmp/identity.age
+   ```
+
+4. **Encrypt the private key**:
+   ```bash
+   PUBLIC_KEY=$(grep "public key:" /tmp/identity.age | sed 's/.*public key: //')
+   age --encrypt --recipient "$PUBLIC_KEY" --armor -o deployer/apex.key.age private-key.txt
+   rm private-key.txt /tmp/identity.age  # delete unencrypted files
+   ```
+
+5. **Ensure nginx is enabled**:
+   ```bash
+   touch deployer/nginx
+   ```
+
+### What Deployer Does
+
+When all three certificate files exist, the deployer will:
+
+1. Copy `apex.pem` to `/etc/ssl/$APEX.pem`
+2. Decrypt `apex.key.age` using `key.age` as the identity
+3. Copy the key to `/etc/ssl/private/$APEX.key` with secure permissions (640, root:ssl-cert)
+4. Delete the temporary decrypted key
+5. Generate nginx config with:
+   - HTTPS on port 443 using the origin certificate
+   - HTTP on port 80 redirecting to HTTPS
+   - www subdomain redirecting to apex (if WWW=1)
+
+### Cloudflare SSL Mode
+
+In your Cloudflare dashboard, set the SSL/TLS encryption mode to **Full (strict)** to ensure end-to-end encryption with certificate validation.
+
 (Ends)
