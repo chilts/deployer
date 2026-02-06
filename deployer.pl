@@ -75,6 +75,25 @@ while (my ($k, $v) = each(%$env)) {
             print " Value? - $k=";
             my $value = <STDIN>;
             chomp $value;
+
+            # Warn about npm in CMD - it doesn't forward signals properly
+            if ($k eq 'CMD') {
+                while ($value =~ /\bnpm\b/) {
+                    print "\n";
+                    print "       WARNING: Using 'npm' in CMD causes orphaned processes.\n";
+                    print "       npm doesn't forward signals (like SIGTERM) to child processes.\n";
+                    print "       When supervisor restarts, node keeps running and holds the port.\n";
+                    print "\n";
+                    print "       Use a direct command instead, e.g.:\n";
+                    print "         node server.js\n";
+                    print "         node src/index.js\n";
+                    print "\n";
+                    print " Value? - $k=";
+                    $value = <STDIN>;
+                    chomp $value;
+                }
+            }
+
             $env->{$k} = $value;
             write_file($filename, $value);
         }
@@ -139,6 +158,39 @@ unless ($env->{NGINX_CLIENT_MAX_BODY_SIZE} =~ /^\d+[KMG]?$/i) {
 }
 
 my $cmd = $env->{CMD};
+
+# Warn about npm in CMD - it doesn't forward signals properly
+if ($cmd =~ /\bnpm\b/) {
+    print "\n";
+    print "       WARNING: Using 'npm' in CMD causes orphaned processes.\n";
+    print "       npm doesn't forward signals (like SIGTERM) to child processes.\n";
+    print "       When supervisor restarts, node keeps running and holds the port.\n";
+    print "\n";
+    print "       Use a direct command instead, e.g.:\n";
+    print "         node server.js\n";
+    print "         node src/index.js\n";
+    print "\n";
+    print "       Current CMD: $cmd\n";
+    print "\n";
+    print " New CMD (or press Enter to keep current): ";
+    my $new_cmd = <STDIN>;
+    chomp $new_cmd;
+
+    while ($new_cmd =~ /\bnpm\b/) {
+        print "\n";
+        print "       WARNING: Still contains 'npm'. Please use a direct command.\n";
+        print "\n";
+        print " New CMD: ";
+        $new_cmd = <STDIN>;
+        chomp $new_cmd;
+    }
+
+    if (length($new_cmd)) {
+        $cmd = $new_cmd;
+        $env->{CMD} = $cmd;
+        msg("CMD updated to: $cmd");
+    }
+}
 
 # Validate APEX to prevent command injection - only allow valid domain name characters
 if ( $apex !~ /^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$/ || $apex =~ /\.\./ ) {

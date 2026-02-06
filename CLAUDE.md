@@ -44,7 +44,25 @@ Projects must define in `deployer/env`:
 - `APEX` - domain name
 - `PORT` - application port
 - `WWW` - whether to add www redirect (0 or 1)
-- `CMD` - command to run the application
+- `CMD` - command to run the application (must not use `npm`, see below)
+
+### CMD and Signal Forwarding
+
+**Important:** The `CMD` must not use `npm` (e.g., `npm start`). Use a direct command like `node server.js` instead.
+
+**Why:** npm doesn't forward signals to child processes. When supervisor sends SIGTERM to stop or restart the app, npm receives the signal but the node process it spawned keeps running. The orphaned node process gets reparented to PID 1 and continues holding the port, causing `EADDRINUSE` errors on the next restart.
+
+**Examples:**
+```bash
+# Bad - causes orphaned processes
+CMD=npm start
+
+# Good - supervisor can properly manage the process
+CMD=node server.js
+CMD=node src/index.js
+```
+
+The deployer will warn and re-prompt if you enter a CMD containing `npm`.
 
 ### Optional Environment Variables
 
