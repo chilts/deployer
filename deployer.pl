@@ -53,9 +53,10 @@ if ( -f 'deployer/env' ) {
     my $cfg = new Config::Simple('deployer/env');
     if ( defined $cfg ) {
         # Use param(-block => 'default') to get keys without the 'default.' prefix
-        # that Config::Simple adds when reading simple key=value files
-        my %vars = $cfg->param(-block => 'default');
-        %$env = %vars;
+        # that Config::Simple adds when reading simple key=value files.
+        # Note: param(-block => ...) returns a hash reference, so we dereference it.
+        my $vars = $cfg->param(-block => 'default');
+        %$env = %$vars;
     }
 }
 
