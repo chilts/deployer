@@ -9,7 +9,6 @@ It isn't Debian packaging. It isn't Docker. It's really just to help me, a littl
 ```
 sudo apt-get install      \
   libmodern-perl-perl     \
-  libconfig-simple-perl   \
   libfile-slurp-perl      \
   libipc-run3-perl        \
   libjson-any-perl        \

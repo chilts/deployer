@@ -2,7 +2,6 @@
 ## --------------------------------------------------------------------------------------------------------------------
 
 use Modern::Perl;
-use Config::Simple;
 use File::Slurp;
 use File::Temp ();
 use IPC::Run3;
@@ -50,14 +49,7 @@ my $is_nginx_done = 0;
 
 my $env = {};
 if ( -f 'deployer/env' ) {
-    my $cfg = new Config::Simple('deployer/env');
-    if ( defined $cfg ) {
-        # Use param(-block => 'default') to get keys without the 'default.' prefix
-        # that Config::Simple adds when reading simple key=value files.
-        # Note: param(-block => ...) returns a hash reference, so we dereference it.
-        my $vars = $cfg->param(-block => 'default');
-        %$env = %$vars;
-    }
+    $env = read_key_value_file('deployer/env');
 }
 
 msg("User         : $ENV{USER}");
@@ -624,6 +616,21 @@ sep();
 title("Complete!");
 
 ## --------------------------------------------------------------------------------------------------------------------
+
+sub read_key_value_file {
+    my ($filename) = @_;
+    my $hash = {};
+    my @lines = read_file($filename);
+    for my $line (@lines) {
+        chomp $line;
+        next if $line =~ /^\s*$/;
+        next if $line =~ /^\s*#/;
+        if ($line =~ /^\s*([^:]+?)\s*:\s*(.*?)\s*$/) {
+            $hash->{$1} = $2;
+        }
+    }
+    return $hash;
+}
 
 sub read_file_and_sub_env {
     my ($filename) = @_;

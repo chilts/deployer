@@ -23,7 +23,7 @@ Run the deployer on a target project (from within that project's directory):
 The deployer is a single Perl script that runs in a target project directory and configures that project for production deployment. It requires:
 - A `deployer/` directory in the target project containing configuration files
 - sudo access on the target server
-- Perl dependencies: `Modern::Perl`, `Config::Simple`, `File::Slurp`, `IPC::Run3`, `JSON::Any`
+- Perl dependencies: `Modern::Perl`, `File::Slurp`, `IPC::Run3`, `JSON::Any`
 
 ### Deployment Flow
 
