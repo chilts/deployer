@@ -310,6 +310,9 @@ sep();
 title("Supervisor");
 
 if ( -f "deployer/supervisor" ) {
+    # check if this is a new service (conf doesn't exist yet)
+    my $is_new_service = ! -f "/etc/supervisor/conf.d/$name.conf";
+
     # for supervisord logging
     run("sudo mkdir -p '/var/log/supervisor/$name/'");
 
@@ -354,7 +357,14 @@ if ( -f "deployer/supervisor" ) {
 
     run("sudo cp $supervisor_filename /etc/supervisor/conf.d/$name.conf");
 
-    run("sudo supervisorctl restart $safe_name");
+    if ( $is_new_service ) {
+        msg("New service detected, reading new config and starting");
+        run("sudo supervisorctl reread");
+        run("sudo supervisorctl update");
+    }
+    else {
+        run("sudo supervisorctl restart $safe_name");
+    }
 }
 else {
     msg("No supervisor file found");
