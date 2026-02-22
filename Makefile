@@ -9,7 +9,7 @@
 all:
 	echo "Doing nothing here since we might just call 'make' during tests."
 
-SCRIPTS = deployer.pl deployer-pg-dump.sh deployer-origin-cert-setup.sh deployer-origin-cert-check.sh deployer-setup.sh
+SCRIPTS = deployer.pl deployer-pg-dump.sh deployer-origin-cert-setup.sh deployer-origin-cert-check.sh deployer-setup.sh deployer-domains.pl deployer-domain-setup.sh deployer-domain-check.sh
 
 deploy:
 	# scp $(SCRIPTS) rodia.chilts.me:~/bin

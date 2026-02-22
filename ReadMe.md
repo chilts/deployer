@@ -138,6 +138,38 @@ When all three certificate files exist, the deployer will:
    - HTTP on port 80 redirecting to HTTPS
    - www subdomain redirecting to apex (if WWW=1)
 
+### Checking Custom Domain Certificates
+
+`deployer-domain-check.sh` verifies that the custom domain certificate setup is correct and that the encrypted private keys can be decrypted. Run it from within a webapp directory:
+
+```bash
+~/bin/deployer-domain-check.sh              # check all custom domains
+~/bin/deployer-domain-check.sh example.com  # check a specific domain
+```
+
+It performs the following checks:
+
+1. `deployer/domains/` directory exists
+2. `deployer/domains/key.age` (the shared age identity) exists and can be decrypted with your passphrase
+3. For each domain, `cert.pem` (the Origin Certificate) exists
+4. For each domain, `cert.key.age` (the encrypted private key) exists and can be decrypted using the age identity
+
+The passphrase is only prompted once — the decrypted identity is held in a temp file (automatically cleaned up) and reused across all domains. The decrypted private keys are discarded to `/dev/null` since we only need to verify decryption succeeds.
+
+If any check fails, the script reports which domain(s) had problems and exits with a non-zero status.
+
+### Custom Domain Scripts: Development vs Production
+
+| Script | Where to run | Purpose |
+|--------|-------------|---------|
+| `deployer-domain-setup.sh` | Development | Creates encrypted cert files and commits them to the repo |
+| `deployer-domain-check.sh` | Development | Verifies cert files decrypt correctly before deploying |
+| `deployer-domains.pl` | Production (server) | Installs certs, generates nginx configs, restarts nginx |
+
+**Development** (your local machine): Use `deployer-domain-setup.sh` to add a new domain's certificate files, then `deployer-domain-check.sh` to verify they work. Commit the files to git and push.
+
+**Production** (the server): After pulling the new cert files, run `deployer-domains.pl` to install the certificates and configure nginx. This requires sudo access and writes to `/etc/ssl/`, `/etc/nginx/`, etc.
+
 ### Cloudflare SSL Mode
 
 In your Cloudflare dashboard, set the SSL/TLS encryption mode to **Full (strict)** to ensure end-to-end encryption with certificate validation.

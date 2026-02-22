@@ -151,3 +151,66 @@ Run from within a webapp directory to verify the passphrase works and files are 
 ```bash
 deployer-pg-dump.sh <backup-dir> <database-url>
 ```
+
+### Custom Domain Mapping
+
+For services that serve multiple domains (e.g., static site hosting, blog hosting), additional custom domains can be mapped to an already-deployed service using `deployer-domains.pl`. Each custom domain gets its own Cloudflare Origin Certificate and nginx config, all proxying to the same PORT.
+
+#### Directory Structure
+
+```
+deployer/
+  domains/
+    key.age                    # shared age identity for all custom domains
+    example.com/
+      cert.pem                 # Cloudflare Origin Certificate
+      cert.key.age             # private key encrypted with key.age
+    blog.example.org/
+      cert.pem
+      cert.key.age
+```
+
+The `domains/key.age` is separate from `deployer/key.age` so custom domain management is independent of the APEX cert setup.
+
+#### Adding a Custom Domain
+
+```bash
+~/bin/deployer-domain-setup.sh example.com
+```
+
+This interactively creates the age identity (first time only) and prompts for the Origin Certificate and private key. Then deploy the domain:
+
+```bash
+~/bin/deployer-domains.pl example.com
+```
+
+#### Processing All Custom Domains
+
+```bash
+~/bin/deployer-domains.pl
+```
+
+Processes all domains in `deployer/domains/`, installing certs and generating nginx configs.
+
+#### Removing a Custom Domain
+
+```bash
+~/bin/deployer-domains.pl --remove example.com
+```
+
+Removes the nginx config and SSL files from the server.
+
+#### Validating Custom Domain Certs
+
+```bash
+~/bin/deployer-domain-check.sh              # check all domains
+~/bin/deployer-domain-check.sh example.com  # check specific domain
+```
+
+#### How It Works
+
+Each custom domain gets an nginx server block that:
+- Listens on port 443 with the domain's Origin Certificate
+- Proxies all requests to `localhost:$PORT` (same port as the main service)
+- Passes `Host: $http_host` so the backend knows which domain was requested
+- Redirects HTTP to HTTPS
