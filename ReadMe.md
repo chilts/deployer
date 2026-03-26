@@ -4,6 +4,26 @@ A small and simple script to help you install stuff on a server.
 
 It isn't Debian packaging. It isn't Docker. It's really just to help me, a little bit.
 
+## Scripts at a Glance
+
+### Dev (local machine)
+
+| Script | Summary |
+|--------|---------|
+| `deployer-setup.sh` | Interactive setup to create the `deployer/` config directory for a new project |
+| `deployer-origin-cert-setup.sh` | Create age identity + encrypt Cloudflare Origin Cert files for the apex domain |
+| `deployer-origin-cert-check.sh` | Verify the apex Origin Cert files decrypt correctly |
+| `deployer-domain-setup.sh` | Add a custom domain's Origin Cert files under `deployer/domains/` |
+| `deployer-domain-check.sh` | Verify custom domain cert files decrypt correctly (one or all) |
+
+### Server (production)
+
+| Script | Summary |
+|--------|---------|
+| `deployer.pl` | Main deployment script: git pull, build, configure supervisor/nginx/SSL/cron |
+| `deployer-domains.pl` | Install custom domain certs + generate nginx configs (add or `--remove`) |
+| `deployer-pg-dump.sh` | Dump a PostgreSQL database to a backup directory (called by cron) |
+
 ## Packages #
 
 ```
